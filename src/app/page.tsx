@@ -50,19 +50,20 @@ export default function Page() {
       <nav className={styles.nav}>
         <div className={styles.brand}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <span className={styles.brandWord}>NYALTHE</span>
+          <img src="/tokens/strk20.png" alt="STRK20" className={styles.brandImg} />
         </div>
         <SelectWallet variant="nav" />
       </nav>
 
       <header className={styles.hero}>
         <h1 className={styles.heroTitle}>
-          Public proof
+          Just Encrypt
           <br />
-          <span className={styles.heroAccent}>for private claims.</span>
+          <span className={styles.heroAccent}>Everything</span>
         </h1>
         <p className={styles.heroSub}>
-          Event-based payouts on Starknet with public verification and protected claimant details.
+          Shield, unshield, privately transfer and build your own private apps
+          on Starknet.
         </p>
       </header>
 
@@ -71,11 +72,11 @@ export default function Page() {
       </main>
 
       <footer className={styles.footer}>
-        <a href="https://github.com/mystiquemide/nyalthe" target="_blank" rel="noreferrer">
-          Source
+        <a href="https://github.com/PhilippeR26/Starknet-WalletAccount" target="_blank" rel="noreferrer">
+          Repo
         </a>
         <span className={styles.footerDot}>·</span>
-        <span>Built on STRK20</span>
+        <span>Powered by Starknet.js v10.4.0</span>
       </footer>
     </div>
   );

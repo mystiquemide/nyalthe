@@ -24,6 +24,9 @@ fn test_policy_lifecycle() {
     let policy = deploy(authority());
     cheat_caller_address(policy.contract_address, creator(), CheatSpan::TargetCalls(1));
     let id = policy.create_policy(CLAIMANT_COMMITMENT, EVENT_ID, PAYOUT, EXPIRY);
+    assert_eq!(policy.get_policy(id).state, 0);
+    cheat_caller_address(policy.contract_address, creator(), CheatSpan::TargetCalls(1));
+    policy.fund_policy(id);
     assert_eq!(policy.get_policy(id).state, 1);
     cheat_caller_address(policy.contract_address, authority(), CheatSpan::TargetCalls(1));
     assert!(policy.accept_event(id, EVENT_ID));
@@ -43,6 +46,8 @@ fn test_wrong_event_authority_rejected() {
     cheat_caller_address(policy.contract_address, creator(), CheatSpan::TargetCalls(1));
     let id = policy.create_policy(CLAIMANT_COMMITMENT, EVENT_ID, PAYOUT, EXPIRY);
     cheat_caller_address(policy.contract_address, creator(), CheatSpan::TargetCalls(1));
+    policy.fund_policy(id);
+    cheat_caller_address(policy.contract_address, creator(), CheatSpan::TargetCalls(1));
     policy.accept_event(id, EVENT_ID);
 }
 
@@ -52,6 +57,8 @@ fn test_duplicate_authorization_rejected() {
     let policy = deploy(authority());
     cheat_caller_address(policy.contract_address, creator(), CheatSpan::TargetCalls(1));
     let id = policy.create_policy(CLAIMANT_COMMITMENT, EVENT_ID, PAYOUT, EXPIRY);
+    cheat_caller_address(policy.contract_address, creator(), CheatSpan::TargetCalls(1));
+    policy.fund_policy(id);
     cheat_caller_address(policy.contract_address, authority(), CheatSpan::TargetCalls(1));
     policy.accept_event(id, EVENT_ID);
     cheat_caller_address(policy.contract_address, creator(), CheatSpan::TargetCalls(1));
@@ -64,6 +71,8 @@ fn test_expiry_transition() {
     let policy = deploy(authority());
     cheat_caller_address(policy.contract_address, creator(), CheatSpan::TargetCalls(1));
     let id = policy.create_policy(CLAIMANT_COMMITMENT, EVENT_ID, PAYOUT, EXPIRY);
+    cheat_caller_address(policy.contract_address, creator(), CheatSpan::TargetCalls(1));
+    policy.fund_policy(id);
     start_cheat_block_timestamp(policy.contract_address, EXPIRY + 1);
     policy.expire_policy(id);
     stop_cheat_block_timestamp(policy.contract_address);

@@ -16,6 +16,7 @@ pub struct Policy {
 #[starknet::interface]
 pub trait INyalthe<TState> {
     fn create_policy(ref self: TState, claimant_commitment: felt252, event_id: felt252, payout: u128, expiry: u64) -> felt252;
+    fn fund_policy(ref self: TState, policy_id: felt252);
     fn accept_event(ref self: TState, policy_id: felt252, event_id: felt252) -> bool;
     fn authorize_claim(ref self: TState, policy_id: felt252);
     fn settle_claim(ref self: TState, policy_id: felt252);
@@ -31,6 +32,7 @@ pub mod Nyalthe {
     use starknet::{ContractAddress, get_block_timestamp, get_caller_address};
     use super::{INyalthe, Policy};
 
+    const CREATED: u8 = 0;
     const FUNDED: u8 = 1;
     const EVENT_ACCEPTED: u8 = 2;
     const CLAIM_AUTHORIZED: u8 = 3;
@@ -93,10 +95,18 @@ pub mod Nyalthe {
             let id_u256 = self.next_policy_id.read();
             let policy_id: felt252 = id_u256.try_into().unwrap();
             let creator = get_caller_address();
-            self.policies.write(policy_id, Policy { creator, claimant_commitment, event_id, payout, expiry, state: FUNDED });
+            self.policies.write(policy_id, Policy { creator, claimant_commitment, event_id, payout, expiry, state: CREATED });
             self.next_policy_id.write(id_u256 + 1);
             self.emit(PolicyCreated { policy_id, creator, payout, expiry });
             policy_id
+        }
+
+        fn fund_policy(ref self: ContractState, policy_id: felt252) {
+            let policy = self.policies.read(policy_id);
+            assert(policy.creator.is_non_zero(), errors::NOT_FOUND);
+            assert(get_caller_address() == policy.creator, errors::NOT_CREATOR);
+            assert(policy.state == CREATED, errors::INVALID_STATE);
+            self.policies.write(policy_id, Policy { state: FUNDED, ..policy });
         }
 
         fn accept_event(ref self: ContractState, policy_id: felt252, event_id: felt252) -> bool {

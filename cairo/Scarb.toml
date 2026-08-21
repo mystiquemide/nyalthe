@@ -6,6 +6,16 @@ edition = "2024_07"
 [dependencies]
 starknet = "2.18.0"
 
+[dev-dependencies]
+snforge_std = "0.63.0"
+assert_macros = "2.17.0"
+
+[scripts]
+test = "snforge test"
+
+[[test]]
+name = "nyalthe_unittest"
+
 [[target.starknet-contract]]
 sierra = true
 casm = true

@@ -1,5 +1,8 @@
 use starknet::ContractAddress;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Copy, Drop, Serde, starknet::Store, PartialEq, Debug)]
 pub struct Policy {
     pub creator: ContractAddress,

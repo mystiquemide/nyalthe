@@ -2,6 +2,8 @@ use starknet::ContractAddress;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod test_token;
 
 #[derive(Copy, Drop, Serde, starknet::Store, PartialEq, Debug)]
 pub struct Policy {

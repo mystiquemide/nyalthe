@@ -13,13 +13,32 @@ pub struct Policy {
     pub state: u8,
 }
 
+#[derive(Copy, Drop, Serde, PartialEq, Debug)]
+pub struct OpenNoteDeposit {
+    pub note_id: felt252,
+    pub token: ContractAddress,
+    pub amount: u128,
+}
+
+#[derive(Copy, Drop, Serde, PartialEq, Debug)]
+pub enum SettlementOperation {
+    Fund,
+    Settle,
+}
+
+#[starknet::interface]
+pub trait IERC20<TState> {
+    fn balance_of(self: @TState, account: ContractAddress) -> u256;
+    fn approve(ref self: TState, spender: ContractAddress, amount: u256) -> bool;
+}
+
 #[starknet::interface]
 pub trait INyalthe<TState> {
     fn create_policy(ref self: TState, claimant_commitment: felt252, event_id: felt252, payout: u128, expiry: u64) -> felt252;
     fn fund_policy(ref self: TState, policy_id: felt252);
     fn accept_event(ref self: TState, policy_id: felt252, event_id: felt252) -> bool;
     fn authorize_claim(ref self: TState, policy_id: felt252);
-    fn settle_claim(ref self: TState, policy_id: felt252);
+    fn privacy_invoke(ref self: TState, operation: SettlementOperation, policy_id: felt252, token: ContractAddress, note_id: felt252) -> Span<OpenNoteDeposit>;
     fn expire_policy(ref self: TState, policy_id: felt252);
     fn get_policy(self: @TState, policy_id: felt252) -> Policy;
     fn get_event_authority(self: @TState) -> ContractAddress;
@@ -29,8 +48,8 @@ pub trait INyalthe<TState> {
 pub mod Nyalthe {
     use core::num::traits::Zero;
     use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess, StoragePointerWriteAccess};
-    use starknet::{ContractAddress, get_block_timestamp, get_caller_address};
-    use super::{INyalthe, Policy};
+    use starknet::{ContractAddress, get_block_timestamp, get_caller_address, get_contract_address};
+    use super::{IERC20Dispatcher, IERC20DispatcherTrait, INyalthe, OpenNoteDeposit, Policy, SettlementOperation};
 
     const CREATED: u8 = 0;
     const FUNDED: u8 = 1;
@@ -49,11 +68,13 @@ pub mod Nyalthe {
         pub const NOT_EVENT_AUTHORITY: felt252 = 'NOT_EVENT_AUTHORITY';
         pub const INVALID_STATE: felt252 = 'INVALID_STATE';
         pub const EVENT_MISMATCH: felt252 = 'EVENT_MISMATCH';
+        pub const NOT_PRIVACY_POOL: felt252 = 'NOT_PRIVACY_POOL';
     }
 
     #[storage]
     struct Storage {
         event_authority: ContractAddress,
+        privacy_pool: ContractAddress,
         next_policy_id: u256,
         policies: Map<felt252, Policy>,
     }
@@ -80,8 +101,9 @@ pub mod Nyalthe {
     struct PolicyExpired { #[key] policy_id: felt252 }
 
     #[constructor]
-    fn constructor(ref self: ContractState, event_authority: ContractAddress) {
+    fn constructor(ref self: ContractState, event_authority: ContractAddress, privacy_pool: ContractAddress) {
         self.event_authority.write(event_authority);
+        self.privacy_pool.write(privacy_pool);
         self.next_policy_id.write(1);
     }
 
@@ -130,13 +152,29 @@ pub mod Nyalthe {
             self.emit(ClaimAuthorized { policy_id, claimant_commitment: policy.claimant_commitment });
         }
 
-        fn settle_claim(ref self: ContractState, policy_id: felt252) {
+        fn privacy_invoke(ref self: ContractState, operation: SettlementOperation, policy_id: felt252, token: ContractAddress, note_id: felt252) -> Span<OpenNoteDeposit> {
+            let pool = self.privacy_pool.read();
+            assert(get_caller_address() == pool, errors::NOT_PRIVACY_POOL);
             let policy = self.policies.read(policy_id);
             assert(policy.creator.is_non_zero(), errors::NOT_FOUND);
-            assert(get_caller_address() == policy.creator, errors::NOT_CREATOR);
-            assert(policy.state == CLAIM_AUTHORIZED, errors::INVALID_STATE);
-            self.policies.write(policy_id, Policy { state: SETTLED, ..policy });
-            self.emit(ClaimSettled { policy_id });
+            match operation {
+                SettlementOperation::Fund => {
+                    assert(policy.state == CREATED, errors::INVALID_STATE);
+                    self.policies.write(policy_id, Policy { state: FUNDED, ..policy });
+                    [].span()
+                },
+                SettlementOperation::Settle => {
+                    assert(policy.state == CLAIM_AUTHORIZED, errors::INVALID_STATE);
+                    let erc20 = IERC20Dispatcher { contract_address: token };
+                    let balance: u256 = erc20.balance_of(get_contract_address());
+                    let amount: u128 = balance.try_into().expect('PAYOUT_OVERFLOW');
+                    assert(amount == policy.payout, 'PAYOUT_MISMATCH');
+                    erc20.approve(pool, balance);
+                    self.policies.write(policy_id, Policy { state: SETTLED, ..policy });
+                    self.emit(ClaimSettled { policy_id });
+                    [OpenNoteDeposit { note_id, token, amount }].span()
+                },
+            }
         }
 
         fn expire_policy(ref self: ContractState, policy_id: felt252) {

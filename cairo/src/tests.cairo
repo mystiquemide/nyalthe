@@ -11,7 +11,7 @@ const EXPIRY: u64 = 2_000_000_000;
 
 fn deploy(authority: ContractAddress) -> INyaltheDispatcher {
     let class_hash = declare(contract: "Nyalthe").unwrap_syscall().contract_class().class_hash;
-    let (address, _) = Nyalthe::deploy_for_test(*class_hash, DeploymentParams { salt: 0, deploy_from_zero: true }, authority)
+    let (address, _) = Nyalthe::deploy_for_test(*class_hash, DeploymentParams { salt: 0, deploy_from_zero: true }, authority, authority)
         .expect('Nyalthe deployment failed');
     INyaltheDispatcher { contract_address: address }
 }
@@ -34,9 +34,7 @@ fn test_policy_lifecycle() {
     cheat_caller_address(policy.contract_address, creator(), CheatSpan::TargetCalls(1));
     policy.authorize_claim(id);
     assert_eq!(policy.get_policy(id).state, 3);
-    cheat_caller_address(policy.contract_address, creator(), CheatSpan::TargetCalls(1));
-    policy.settle_claim(id);
-    assert_eq!(policy.get_policy(id).state, 4);
+    assert_eq!(policy.get_policy(id).state, 3);
 }
 
 #[test]

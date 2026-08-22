@@ -354,7 +354,7 @@ export default function WalletAccountV6Tag() {
         contractAddress: constants.NyaltheSepoliaAddress,
         entrypoint: "get_policy",
         calldata: [constants.NyalthePolicyId],
-      });
+      }, "latest");
       const policyState = num.toBigInt(policyResponse[5]);
       if (policyState === 4n) {
         setResultComplex({
@@ -376,7 +376,7 @@ export default function WalletAccountV6Tag() {
         contractAddress: TOKEN,
         entrypoint: "balance_of",
         calldata: [constants.NyaltheSepoliaAddress],
-      });
+      }, "latest");
       const helperBalance = num.toBigInt(balanceResponse[0]) + (num.toBigInt(balanceResponse[1] ?? 0) << 128n);
       if (helperBalance === 0n) {
         await submit(

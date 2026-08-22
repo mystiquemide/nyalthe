@@ -228,9 +228,7 @@ export default function WalletAccountV6Tag() {
         { label: "Transaction", value: shortHex(txH), hash: txH },
       ],
     });
-    // myWalletAccount.provider is fixed at connect time (Sepolia) and can point at the
-    // wrong network; use the frontend provider that tracks the current network instead.
-    const provider = constants.myFrontendProviders[myFrontendProviderIndex];
+    const provider = myWalletAccount.provider;
     try {
       const txR = await provider.waitForTransaction(txH, {
         retries: 400,
@@ -346,7 +344,11 @@ export default function WalletAccountV6Tag() {
   const handleComplex = async () => {
     setResultComplex(null);
     setVerdictComplex(null);
-    const provider = constants.myFrontendProviders[myFrontendProviderIndex];
+    if (!myWalletAccount) {
+      setResultComplex(errorResult("Connect Ready X before continuing policy 1 settlement."));
+      return;
+    }
+    const provider = myWalletAccount.provider;
     try {
       const balanceResponse = await provider.callContract({
         contractAddress: TOKEN,

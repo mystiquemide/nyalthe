@@ -350,6 +350,28 @@ export default function WalletAccountV6Tag() {
     }
     const provider = myWalletAccount.provider;
     try {
+      const policyResponse = await provider.callContract({
+        contractAddress: constants.NyaltheSepoliaAddress,
+        entrypoint: "get_policy",
+        calldata: [constants.NyalthePolicyId],
+      });
+      const policyState = num.toBigInt(policyResponse[5]);
+      if (policyState === 4n) {
+        setResultComplex({
+          status: "ok",
+          title: "Policy 1 is already settled",
+          rows: [{
+            label: "Settlement transaction",
+            value: shortHex("0x0283f9731387e31606acfc94650d868033ae6c5ca96913dedb29ef6f258d97a8"),
+            hash: "0x0283f9731387e31606acfc94650d868033ae6c5ca96913dedb29ef6f258d97a8",
+          }],
+        });
+        return;
+      }
+      if (policyState !== 3n) {
+        setResultComplex(errorResult(`Policy 1 is in state ${policyState}; expected CLAIM_AUTHORIZED (3).`));
+        return;
+      }
       const balanceResponse = await provider.callContract({
         contractAddress: TOKEN,
         entrypoint: "balance_of",

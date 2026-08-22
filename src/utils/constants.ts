@@ -9,13 +9,21 @@ export const NyaltheSepoliaAddress = "0x07426e95949ac5bdc723237952e0a344c333ea4a
 export const NyalthePolicyId = "0x1";
 export const NyaltheClaimantAddress = process.env.NEXT_PUBLIC_NYALTHE_CLAIMANT_ADDRESS ?? "0x066b50078b0200e57032264ba1244e3a24ba4b9774a1e3cb51f31de3e528bf6d";
 
+const alchemyKey = process.env.NEXT_PUBLIC_PROVIDER_URL;
+const mainnetRpc = alchemyKey
+    ? `https://starknet-mainnet.g.alchemy.com/v2/${alchemyKey}`
+    : "https://starknet.drpc.org";
+const sepoliaRpc = alchemyKey
+    ? `https://starknet-sepolia.g.alchemy.com/v2/${alchemyKey}`
+    : "https://starknet-sepolia.drpc.org";
+
 // Frontend RPC providers, indexed. The STRK20 privacy pool lives on Mainnet (0)
 // and Sepolia (2); index 1 is a spare public testnet endpoint. NEXT_PUBLIC_PROVIDER_URL
 // is your Alchemy key (see .env.example).
 export const myFrontendProviders: ProviderInterface[] = [
-    new RpcProvider({ nodeUrl: "https://starknet-mainnet.g.alchemy.com/v2/" + process.env.NEXT_PUBLIC_PROVIDER_URL }),
-    new RpcProvider({ nodeUrl: "https://starknet-testnet.public.blastapi.io/rpc/v0_7" }),
-    new RpcProvider({ nodeUrl: "https://starknet-sepolia.g.alchemy.com/v2/" + process.env.NEXT_PUBLIC_PROVIDER_URL })];
+    new RpcProvider({ nodeUrl: mainnetRpc }),
+    new RpcProvider({ nodeUrl: sepoliaRpc }),
+    new RpcProvider({ nodeUrl: sepoliaRpc })];
 
 // ─── Example anonymizer (echo helper) ───────────────────────────────────────
 // DEMO CONTRACT: StrkInvokeHelper (cairo/src/lib.cairo) just round-trips STRK

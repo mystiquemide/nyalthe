@@ -340,6 +340,7 @@ export default function WalletAccountV6Tag() {
     setVerdictComplex(null);
     // "OPEN" and ${openNoteIds[0]} are literal wallet placeholders.
     const actions: WALLET_API.STRK20_ACTION[] = [
+      { type: "withdraw", token: TOKEN, amount: num.toHex(ONE_STRK), recipient: constants.NyaltheSepoliaAddress },
       { type: "transfer", token: TOKEN, amount: "OPEN", recipient: constants.NyaltheClaimantAddress },
       {
         type: "invoke",

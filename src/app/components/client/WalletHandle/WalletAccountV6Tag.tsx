@@ -359,7 +359,7 @@ export default function WalletAccountV6Tag() {
       if (policyState === 4n) {
         setResultComplex({
           status: "ok",
-          title: "Policy 1 is already settled",
+          title: `Policy ${constants.NyalthePolicyId} is already settled`,
           rows: [{
             label: "Settlement transaction",
             value: shortHex("0x0283f9731387e31606acfc94650d868033ae6c5ca96913dedb29ef6f258d97a8"),
@@ -369,7 +369,7 @@ export default function WalletAccountV6Tag() {
         return;
       }
       if (policyState !== 3n) {
-        setResultComplex(errorResult(`Policy 1 is in state ${policyState}; expected CLAIM_AUTHORIZED (3).`));
+        setResultComplex(errorResult(`Policy ${constants.NyalthePolicyId} is in state ${policyState}; expected CLAIM_AUTHORIZED (3).`));
         return;
       }
       const balanceResponse = await provider.callContract({

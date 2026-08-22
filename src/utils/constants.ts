@@ -6,7 +6,7 @@ import { ProviderInterface, RpcProvider } from "starknet";
 // moves privately (STRK on Starknet here).
 export const addrSTRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 export const NyaltheSepoliaAddress = "0x07426e95949ac5bdc723237952e0a344c333ea4adb5968ea8a65b2b517a42a19";
-export const NyalthePolicyId = "0x1";
+export const NyalthePolicyId = process.env.NEXT_PUBLIC_NYALTHE_POLICY_ID ?? "0x1";
 export const NyaltheClaimantAddress = process.env.NEXT_PUBLIC_NYALTHE_CLAIMANT_ADDRESS ?? "0x066b50078b0200e57032264ba1244e3a24ba4b9774a1e3cb51f31de3e528bf6d";
 
 const alchemyKey = process.env.NEXT_PUBLIC_PROVIDER_URL;

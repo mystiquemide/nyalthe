@@ -4,10 +4,17 @@ import {
   OPEN_NOTE_AMOUNT,
   PAYOUT_AMOUNT,
   SETTLE_OPERATION,
+  buildPayoutFundingActions,
   buildSettlementActions,
 } from "./settlement";
 
 describe("buildSettlementActions", () => {
+  it("builds the separate payout funding withdrawal", () => {
+    expect(buildPayoutFundingActions({ contractAddress: "0x123", tokenAddress: "0x789" })).toEqual([
+      { type: "withdraw", token: "0x789", amount: PAYOUT_AMOUNT, recipient: "0x123" },
+    ]);
+  });
+
   it("creates an open note before invoking Nyalthe", () => {
     const actions = buildSettlementActions({
       contractAddress: "0x123",
@@ -17,12 +24,6 @@ describe("buildSettlementActions", () => {
     });
 
     expect(actions).toEqual([
-      {
-        type: "withdraw",
-        token: "0x789",
-        amount: PAYOUT_AMOUNT,
-        recipient: "0x123",
-      },
       {
         type: "transfer",
         token: "0x789",
@@ -38,7 +39,7 @@ describe("buildSettlementActions", () => {
   });
 
   it("keeps wallet placeholders literal", () => {
-    const [, , invoke] = buildSettlementActions({
+    const [, invoke] = buildSettlementActions({
       contractAddress: "0x123",
       claimantAddress: "0x456",
       tokenAddress: "0x789",

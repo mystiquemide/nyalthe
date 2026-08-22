@@ -9,6 +9,7 @@ import { useStoreWallet } from "../../Wallet/walletContext";
 import { useFrontendProvider } from "../provider/providerContext";
 import { StrkCoin } from "../../TokenIcons";
 import SelectWallet from "./SelectWallet";
+import { buildPayoutFundingActions, buildSettlementActions } from "@/lib/strk20/settlement";
 
 // DEMO: all actions use one token (STRK). Swap constants.addrSTRK for your token,
 // or make the token a user selection.
@@ -345,17 +346,39 @@ export default function WalletAccountV6Tag() {
   const handleComplex = async () => {
     setResultComplex(null);
     setVerdictComplex(null);
-    // "OPEN" and ${openNoteIds[0]} are literal wallet placeholders.
-    const actions: WALLET_API.STRK20_ACTION[] = [
-      { type: "withdraw", token: TOKEN, amount: num.toHex(ONE_STRK), recipient: constants.NyaltheSepoliaAddress },
-      { type: "transfer", token: TOKEN, amount: "OPEN", recipient: constants.NyaltheClaimantAddress },
-      {
-        type: "invoke",
-        contract: constants.NyaltheSepoliaAddress,
-        calldata: ["0x1", constants.NyalthePolicyId, num.toHex(TOKEN), "${openNoteIds[0]}"],
-      },
-    ];
-    await submit(actions, setResultComplex, "1 STRK protected payout");
+    const provider = constants.myFrontendProviders[myFrontendProviderIndex];
+    try {
+      const balanceResponse = await provider.callContract({
+        contractAddress: TOKEN,
+        entrypoint: "balance_of",
+        calldata: [constants.NyaltheSepoliaAddress],
+      });
+      const helperBalance = num.toBigInt(balanceResponse[0]) + (num.toBigInt(balanceResponse[1] ?? 0) << 128n);
+      if (helperBalance === 0n) {
+        await submit(
+          buildPayoutFundingActions({ contractAddress: constants.NyaltheSepoliaAddress, tokenAddress: TOKEN }),
+          setResultComplex,
+          "Stage 1 of 2: fund Nyalthe with 1 STRK",
+        );
+        return;
+      }
+      if (helperBalance !== ONE_STRK) {
+        setResultComplex(errorResult(`Nyalthe holds ${fmtStrk(helperBalance)} STRK; expected exactly 1 STRK before settlement.`));
+        return;
+      }
+      await submit(
+        buildSettlementActions({
+          contractAddress: constants.NyaltheSepoliaAddress,
+          claimantAddress: constants.NyaltheClaimantAddress,
+          tokenAddress: TOKEN,
+          policyId: constants.NyalthePolicyId,
+        }),
+        setResultComplex,
+        "Stage 2 of 2: settle protected payout",
+      );
+    } catch (error: any) {
+      setResultComplex(errorResult(error?.message ?? error?.toString?.() ?? String(error)));
+    }
   };
 
   // Fetch the tx receipt and verify the helper's Invoked event: the open note was filled
@@ -487,7 +510,7 @@ export default function WalletAccountV6Tag() {
     shield: { label: "You're shielding", value: "10", token: "STRK", hint: "Deposit into the privacy pool", cta: "Shield", onRun: handleShield, result: resultShield, disabled: !isStrk20Network },
     send: { label: "You're sending - to self", value: "1", token: "STRK", hint: "Private in-pool transfer", cta: "Self transfer", onRun: handleSelfTransfer, result: resultTransfer, disabled: !isStrk20Network },
     unshield: { label: "You're unshielding", value: "1", token: "STRK", hint: "Withdraw to your account", cta: "Unshield", onRun: handleUnshield, result: resultUnshield, disabled: !isStrk20Network },
-    echo: { label: "Nyalthe protected payout", value: "1", token: "STRK", hint: "Open note → policy settlement → protected receipt", cta: "Settle policy 1", onRun: handleComplex, result: resultComplex, disabled: !isStrk20Network },
+    echo: { label: "Nyalthe protected payout", value: "1", token: "STRK", hint: "Fund helper first, then settle into an open note", cta: "Continue policy 1 settlement", onRun: handleComplex, result: resultComplex, disabled: !isStrk20Network },
     balances: { label: "Shielded balances", value: "All", token: "tokens", hint: "Read your private pool balances", cta: "Query balances", onRun: handleBalances, result: resultBalances, disabled: !isStrk20Network },
   };
   const active = CONFIG[tab];

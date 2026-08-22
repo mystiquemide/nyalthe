@@ -204,6 +204,13 @@ export default function WalletAccountV6Tag() {
       setResult(errorResult("Switch Ready X to Starknet Sepolia before settling policy 1."));
       return undefined;
     }
+    setResult({ status: "pending", title: "Checking STRK20 settlement", note: "Running wallet simulation before submission." });
+    try {
+      await myWalletAccount.strk20PrepareInvoke(actions, true);
+    } catch (error: any) {
+      setResult(errorResult(`STRK20 simulation failed: ${error?.message ?? error?.toString?.() ?? String(error)}`));
+      return undefined;
+    }
     let txH: string;
     try {
       const r = await myWalletAccount.strk20InvokeTransaction(actions);

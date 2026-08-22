@@ -475,7 +475,7 @@ export default function WalletAccountV6Tag() {
     shield: { label: "You're shielding", value: "10", token: "STRK", hint: "Deposit into the privacy pool", cta: "Shield", onRun: handleShield, result: resultShield, disabled: !isStrk20Network },
     send: { label: "You're sending - to self", value: "1", token: "STRK", hint: "Private in-pool transfer", cta: "Self transfer", onRun: handleSelfTransfer, result: resultTransfer, disabled: !isStrk20Network },
     unshield: { label: "You're unshielding", value: "1", token: "STRK", hint: "Withdraw to your account", cta: "Unshield", onRun: handleUnshield, result: resultUnshield, disabled: !isStrk20Network },
-    echo: { label: "Nyalthe protected payout", value: "1", token: "STRK", hint: "Open note → policy settlement → protected receipt", cta: "Settle policy 1", onRun: handleComplex, result: resultComplex, disabled: !isStrk20Network || !constants.NyaltheClaimantAddress },
+    echo: { label: "Nyalthe protected payout", value: "1", token: "STRK", hint: "Open note → policy settlement → protected receipt", cta: "Settle policy 1", onRun: handleComplex, result: resultComplex, disabled: !isStrk20Network },
     balances: { label: "Shielded balances", value: "All", token: "tokens", hint: "Read your private pool balances", cta: "Query balances", onRun: handleBalances, result: resultBalances, disabled: !isStrk20Network },
   };
   const active = CONFIG[tab];
@@ -526,24 +526,6 @@ export default function WalletAccountV6Tag() {
         <div className={styles.warn}>
           STRK20 actions require Mainnet or Sepolia - switch your wallet network.
         </div>
-      )}
-
-      {/* Echo-helper deploy (echo tab, supported network, no helper yet) */}
-      {tab === "echo" && isStrk20Network && !hasEchoHelper && (
-        <>
-          <div className={styles.warn}>
-            Echo helper not deployed on {networkName}. Deploy one, then set
-            NEXT_PUBLIC_STRK20_ECHO_HELPER_SEPOLIA.
-          </div>
-          <button
-            className={`${styles.btn} ${styles.btnGreen} ${styles.btnBlock}`}
-            disabled={deploying}
-            onClick={handleDeployHelper}
-          >
-            {deploying ? "Deploying…" : `Deploy echo helper (${networkName})`}
-          </button>
-          {resultDeploy ? <ResultCard r={resultDeploy} /> : null}
-        </>
       )}
 
       {/* Primary CTA - connect prompt until a wallet is connected. */}

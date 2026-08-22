@@ -329,37 +329,21 @@ export default function WalletAccountV6Tag() {
     await submit(actions, setResultTransfer, "1 STRK");
   };
 
-  // Complex action - echo invoke round-trip: withdraw 5 STRK to the helper, create an
-  // open note for the output, and invoke the helper to fill it. Then verify the Invoked
-  // event on-chain (open note filled with 5 STRK).
+  // Nyalthe settlement: create an open note, then let the privacy wallet invoke
+  // the deployed policy contract and fill that note with the protected payout.
   const handleComplex = async () => {
     setResultComplex(null);
     setVerdictComplex(null);
-    if (!connectedAddress) {
-      setResultComplex(errorResult("Connect a wallet first (open note recipient = connected account)."));
-      return;
-    }
-    const helper = num.toHex(echoHelperAddr);
-    // "OPEN" / ${poolAddress} / ${openNoteIds[0]} are literal placeholder strings the
-    // wallet substitutes during assembly - they must NOT be hex-normalized.
+    // "OPEN" and ${openNoteIds[0]} are literal wallet placeholders.
     const actions: WALLET_API.STRK20_ACTION[] = [
-      { type: "withdraw", token: TOKEN, amount: num.toHex(FIVE_STRK), recipient: helper },
-      { type: "transfer", token: TOKEN, amount: "OPEN", recipient: connectedAddress },
+      { type: "transfer", token: TOKEN, amount: "OPEN", recipient: constants.NyaltheClaimantAddress },
       {
         type: "invoke",
-        contract: helper,
-        calldata: [num.toHex(TOKEN), "${poolAddress}", "${openNoteIds[0]}"],
+        contract: constants.NyaltheSepoliaAddress,
+        calldata: ["0x1", constants.NyalthePolicyId, num.toHex(TOKEN), "${openNoteIds[0]}"],
       },
     ];
-    const txH = await submit(actions, setResultComplex, "5 STRK");
-    if (!txH) return;
-    setVerdictComplex({
-      ok: false,
-      pending: true,
-      title: "Verifying on-chain…",
-      rows: [{ label: "tx", value: shortHex(txH) }],
-    });
-    setVerdictComplex(await verifyEcho(txH));
+    await submit(actions, setResultComplex, "1 STRK protected payout");
   };
 
   // Fetch the tx receipt and verify the helper's Invoked event: the open note was filled
@@ -491,7 +475,7 @@ export default function WalletAccountV6Tag() {
     shield: { label: "You're shielding", value: "10", token: "STRK", hint: "Deposit into the privacy pool", cta: "Shield", onRun: handleShield, result: resultShield, disabled: !isStrk20Network },
     send: { label: "You're sending - to self", value: "1", token: "STRK", hint: "Private in-pool transfer", cta: "Self transfer", onRun: handleSelfTransfer, result: resultTransfer, disabled: !isStrk20Network },
     unshield: { label: "You're unshielding", value: "1", token: "STRK", hint: "Withdraw to your account", cta: "Unshield", onRun: handleUnshield, result: resultUnshield, disabled: !isStrk20Network },
-    echo: { label: "Echo invoke round-trip", value: "5", token: "STRK", hint: "Withdraw → helper → refill open note", cta: "Run echo", onRun: handleComplex, result: resultComplex, disabled: !isStrk20Network || !hasEchoHelper },
+    echo: { label: "Nyalthe protected payout", value: "1", token: "STRK", hint: "Open note → policy settlement → protected receipt", cta: "Settle policy 1", onRun: handleComplex, result: resultComplex, disabled: !isStrk20Network || !constants.NyaltheClaimantAddress },
     balances: { label: "Shielded balances", value: "All", token: "tokens", hint: "Read your private pool balances", cta: "Query balances", onRun: handleBalances, result: resultBalances, disabled: !isStrk20Network },
   };
   const active = CONFIG[tab];

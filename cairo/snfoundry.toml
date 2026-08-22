@@ -1,0 +1,7 @@
+[sncast]
+
+[sncast.mainnet]
+network = "mainnet"
+
+[sncast.sepolia]
+network = "sepolia"

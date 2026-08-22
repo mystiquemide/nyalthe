@@ -137,7 +137,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "shield", label: "Shield" },
   { key: "send", label: "Send" },
   { key: "unshield", label: "Unshield" },
-  { key: "echo", label: "Echo" },
+  { key: "echo", label: "Nyalthe payout" },
   { key: "balances", label: "Balances" },
 ];
 
@@ -198,6 +198,10 @@ export default function WalletAccountV6Tag() {
   ): Promise<string | undefined> {
     if (!myWalletAccount) {
       setResult(errorResult("No WalletAccount available."));
+      return undefined;
+    }
+    if (!isStrk20Network) {
+      setResult(errorResult("Switch Ready X to Starknet Sepolia before settling policy 1."));
       return undefined;
     }
     let txH: string;
@@ -530,7 +534,7 @@ export default function WalletAccountV6Tag() {
 
       {/* Primary CTA - connect prompt until a wallet is connected. */}
       {isConnected ? (
-        <button className={styles.btnCta} disabled={active.disabled} onClick={active.onRun}>
+        <button className={styles.btnCta} onClick={active.onRun}>
           {active.cta}
         </button>
       ) : (

@@ -386,8 +386,9 @@ export default function WalletAccountV6Tag() {
         );
         return;
       }
-      if (helperBalance !== ONE_STRK) {
-        setResultComplex(errorResult(`Nyalthe holds ${fmtStrk(helperBalance)} STRK; expected exactly 1 STRK before settlement.`));
+      const payoutWei = num.toBigInt(constants.NyalthePayoutWei);
+      if (helperBalance !== payoutWei) {
+        setResultComplex(errorResult(`Nyalthe holds ${fmtStrk(helperBalance)} STRK; expected exactly ${fmtStrk(payoutWei)} STRK before settlement.`));
         return;
       }
       await submit(
@@ -396,6 +397,7 @@ export default function WalletAccountV6Tag() {
           claimantAddress: constants.NyaltheClaimantAddress,
           tokenAddress: TOKEN,
           policyId: constants.NyalthePolicyId,
+          payoutWei,
         }),
         setResultComplex,
         "Stage 2 of 2: settle protected payout",
@@ -534,7 +536,7 @@ export default function WalletAccountV6Tag() {
     shield: { label: "You're shielding", value: "10", token: "STRK", hint: "Deposit into the privacy pool", cta: "Shield", onRun: handleShield, result: resultShield, disabled: !isStrk20Network },
     send: { label: "You're sending - to self", value: "1", token: "STRK", hint: "Private in-pool transfer", cta: "Self transfer", onRun: handleSelfTransfer, result: resultTransfer, disabled: !isStrk20Network },
     unshield: { label: "You're unshielding", value: "1", token: "STRK", hint: "Withdraw to your account", cta: "Unshield", onRun: handleUnshield, result: resultUnshield, disabled: !isStrk20Network },
-    echo: { label: "Nyalthe protected payout", value: "1", token: "STRK", hint: "Fund helper first, then settle into an open note", cta: "Continue policy 1 settlement", onRun: handleComplex, result: resultComplex, disabled: !isStrk20Network },
+    echo: { label: "Nyalthe protected payout", value: fmtStrk(num.toBigInt(constants.NyalthePayoutWei)), token: "STRK", hint: "Settle the authorized policy into an open note", cta: `Settle policy ${constants.NyalthePolicyId}`, onRun: handleComplex, result: resultComplex, disabled: !isStrk20Network },
     balances: { label: "Shielded balances", value: "All", token: "tokens", hint: "Read your private pool balances", cta: "Query balances", onRun: handleBalances, result: resultBalances, disabled: !isStrk20Network },
   };
   const active = CONFIG[tab];

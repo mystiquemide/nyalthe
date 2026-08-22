@@ -6,6 +6,7 @@ export type SettlementActionInput = {
   claimantAddress: string;
   tokenAddress: string;
   policyId: string | bigint;
+  payoutWei?: string | bigint;
 };
 
 export const SETTLE_OPERATION = "0x1";
@@ -24,6 +25,7 @@ export function buildSettlementActions(input: SettlementActionInput): WALLET_API
   const claimant = num.toHex(input.claimantAddress);
   const token = num.toHex(input.tokenAddress);
   const policyId = num.toHex(input.policyId);
+  const payout = num.toHex(input.payoutWei ?? PAYOUT_AMOUNT);
 
   return [
     {

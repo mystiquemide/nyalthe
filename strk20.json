@@ -1,6 +1,11 @@
 {
   "transactions": [],
-  "contracts": [],
+  "contracts": [
+    {
+      "address": "0x0265de2b20e459f1de5464a71fe9a73f436e5c3874fa9ae46bdc64d0bb779846",
+      "network": "sepolia"
+    }
+  ],
   "demo_video": "",
   "demo_url": ""
 }

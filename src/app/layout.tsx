@@ -1,24 +1,26 @@
 import type { Metadata } from 'next'
-import { Inter, Space_Mono } from 'next/font/google'
+import { Hanken_Grotesk, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
+import SmoothScroll from './components/SmoothScroll'
 
-// Clean neutral grotesque for everything (matches the Uniswap reference); a mono
-// only for hex addresses / hashes.
-const inter = Inter({
+// Humanist geometric grotesque for everything (close to the reference site's
+// Matter), plus a mono only for on-chain hashes and addresses.
+const sans = Hanken_Grotesk({
   subsets: ['latin'],
-  variable: '--font-body',
+  variable: '--font-sans',
   display: 'swap',
 })
-const spaceMono = Space_Mono({
+const mono = IBM_Plex_Mono({
   subsets: ['latin'],
-  weight: ['400', '700'],
+  weight: ['400', '500'],
   variable: '--font-mono-ui',
   display: 'swap',
 })
 
 export const metadata: Metadata = {
-  title: 'Shielded STRK · WalletAccountV6',
-  description: 'Shield, unshield and privately move STRK on Starknet with WalletAccountV6',
+  title: 'Nyalthe · Public proof for private claims',
+  description:
+    'Nyalthe settles event-based payouts on Starknet while keeping the claimant and amount protected.',
 }
 
 export default function RootLayout({
@@ -29,10 +31,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${spaceMono.variable}`}
+      className={`${sans.variable} ${mono.variable}`}
       suppressHydrationWarning
     >
-      <body>{children}</body>
+      <body>
+        <SmoothScroll>{children}</SmoothScroll>
+      </body>
     </html>
   )
 }

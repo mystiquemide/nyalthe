@@ -11,12 +11,16 @@ export const NyalthePayoutWei = process.env.NEXT_PUBLIC_NYALTHE_PAYOUT_WEI ?? "1
 export const NyaltheClaimantAddress = process.env.NEXT_PUBLIC_NYALTHE_CLAIMANT_ADDRESS ?? "0x066b50078b0200e57032264ba1244e3a24ba4b9774a1e3cb51f31de3e528bf6d";
 
 const alchemyKey = process.env.NEXT_PUBLIC_PROVIDER_URL;
+// Keyless fallback uses Cartridge's public Starknet RPC. It supports the full
+// method set (starknet_call, receipts) with permissive CORS, unlike the previous
+// drpc endpoint which load-balances across backends that intermittently reject
+// starknet_call with -32601. Set NEXT_PUBLIC_PROVIDER_URL to use Alchemy instead.
 const mainnetRpc = alchemyKey
     ? `https://starknet-mainnet.g.alchemy.com/v2/${alchemyKey}`
-    : "https://starknet.drpc.org";
+    : "https://api.cartridge.gg/x/starknet/mainnet";
 const sepoliaRpc = alchemyKey
     ? `https://starknet-sepolia.g.alchemy.com/v2/${alchemyKey}`
-    : "https://starknet-sepolia.drpc.org";
+    : "https://api.cartridge.gg/x/starknet/sepolia";
 
 // Frontend RPC providers, indexed. The STRK20 privacy pool lives on Mainnet (0)
 // and Sepolia (2); index 1 is a spare public testnet endpoint. NEXT_PUBLIC_PROVIDER_URL

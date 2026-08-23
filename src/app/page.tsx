@@ -4,6 +4,7 @@ import HowItWorks from "./components/site/HowItWorks";
 import PrivateByDesign from "./components/site/PrivateByDesign";
 import ProofModel from "./components/site/ProofModel";
 import TrustBoundary from "./components/site/TrustBoundary";
+import Security from "./components/site/Security";
 
 export default function Page() {
   return (
@@ -15,6 +16,7 @@ export default function Page() {
         <PrivateByDesign />
         <ProofModel />
         <TrustBoundary />
+        <Security />
       </main>
     </>
   );

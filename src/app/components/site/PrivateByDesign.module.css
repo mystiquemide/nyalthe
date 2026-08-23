@@ -1,0 +1,128 @@
+.section {
+  background: var(--panel);
+  border-top: 2px solid var(--aqua);
+  padding: 88px var(--gutter);
+}
+
+.inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+}
+
+.head {
+  max-width: 720px;
+  margin-bottom: 40px;
+}
+
+.eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--aqua-deep);
+  margin-bottom: 12px;
+}
+
+.h2 {
+  font-size: clamp(30px, 4.5vw, 46px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 14px;
+}
+
+.intro {
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--body);
+  max-width: 64ch;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.panel {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 30px;
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.protected .kicker {
+  color: var(--aqua-deep);
+}
+.public .kicker {
+  color: var(--muted);
+}
+
+.panelTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.list li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--body);
+}
+.list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+.protected .list li::before {
+  background: var(--aqua);
+}
+.public .list li::before {
+  border: 1.5px solid var(--faint);
+}
+
+.note {
+  margin-top: 26px;
+  padding-left: 16px;
+  border-left: 2px solid var(--aqua);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 72ch;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .section {
+    padding: 64px var(--gutter);
+  }
+  .panel {
+    padding: 26px 22px;
+  }
+}

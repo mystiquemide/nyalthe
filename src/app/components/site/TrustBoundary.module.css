@@ -127,32 +127,6 @@
   content: "\2192";
 }
 
-.callout {
-  margin-top: 22px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--aqua);
-  border-radius: var(--radius-card);
-  padding: 24px 26px;
-}
-
-.calloutTitle {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--aqua-deep);
-  margin-bottom: 10px;
-}
-
-.calloutText {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--body);
-  max-width: 74ch;
-}
-
 @media (max-width: 760px) {
   .flow {
     grid-template-columns: 1fr;

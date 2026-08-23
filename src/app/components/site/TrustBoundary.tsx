@@ -40,15 +40,6 @@ export default function TrustBoundary() {
             <p className={styles.trustLine}>Enforced by code on Starknet.</p>
           </div>
         </div>
-
-        <div className={styles.callout}>
-          <p className={styles.calloutTitle}>The assumption</p>
-          <p className={styles.calloutText}>
-            The contract cannot observe the weather or any off-chain event by itself. It
-            trusts the signed source for that one fact and proves everything that follows,
-            so the event source must be an authority you are willing to trust.
-          </p>
-        </div>
       </div>
     </section>
   );

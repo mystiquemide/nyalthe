@@ -5,9 +5,9 @@ import Link from "next/link";
 import styles from "./SiteNav.module.css";
 
 const LINKS = [
-  { label: "How it works", href: "/#how-it-works" },
-  { label: "Proof model", href: "/#proof" },
-  { label: "Security", href: "/#security" },
+  { label: "How it works", href: "/how-it-works" },
+  { label: "Proof model", href: "/proof-model" },
+  { label: "Security", href: "/security" },
 ];
 
 export default function SiteNav() {
@@ -25,9 +25,9 @@ export default function SiteNav() {
         <ul className={styles.links}>
           {LINKS.map((l) => (
             <li key={l.href}>
-              <a className={styles.link} href={l.href}>
+              <Link className={styles.link} href={l.href}>
                 {l.label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
@@ -54,13 +54,13 @@ export default function SiteNav() {
           <ul className={styles.drawerLinks}>
             {LINKS.map((l) => (
               <li key={l.href}>
-                <a
+                <Link
                   className={styles.drawerLink}
                   href={l.href}
                   onClick={() => setOpen(false)}
                 >
                   {l.label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

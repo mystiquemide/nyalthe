@@ -28,10 +28,10 @@ export default function Footer() {
           <nav className={styles.cols} aria-label="Footer">
             <div className={styles.col}>
               <p className={styles.colTitle}>Explore</p>
-              <a href="/#how-it-works">How it works</a>
-              <a href="/#proof">Proof model</a>
+              <Link href="/how-it-works">How it works</Link>
+              <Link href="/proof-model">Proof model</Link>
               <a href="/#trust">Trust boundary</a>
-              <a href="/#security">Security</a>
+              <Link href="/security">Security</Link>
               <a href="/#evidence">On-chain evidence</a>
             </div>
             <div className={styles.col}>

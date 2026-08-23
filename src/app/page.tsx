@@ -6,6 +6,7 @@ import ProofModel from "./components/site/ProofModel";
 import TrustBoundary from "./components/site/TrustBoundary";
 import Security from "./components/site/Security";
 import OnChainEvidence from "./components/site/OnChainEvidence";
+import FinalCta from "./components/site/FinalCta";
 
 export default function Page() {
   return (
@@ -19,6 +20,7 @@ export default function Page() {
         <TrustBoundary />
         <Security />
         <OnChainEvidence />
+        <FinalCta />
       </main>
     </>
   );

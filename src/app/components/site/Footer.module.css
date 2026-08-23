@@ -1,0 +1,106 @@
+.footer {
+  background: var(--night);
+  padding: 64px var(--gutter) 40px;
+}
+
+.inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.brand {
+  max-width: 320px;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mark {
+  display: block;
+  border-radius: 8px;
+}
+
+.name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.tagline {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.cols {
+  display: flex;
+  gap: 56px;
+  flex-wrap: wrap;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.colTitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 4px;
+}
+
+.col a {
+  font-size: 14px;
+  color: var(--body);
+  transition: color 0.2s ease;
+}
+.col a:hover {
+  color: var(--aqua-hi);
+}
+
+.bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 24px;
+}
+
+.copy {
+  font-size: 13px;
+  color: var(--faint);
+}
+
+.note {
+  font-size: 13px;
+  color: var(--faint);
+}
+
+@media (max-width: 640px) {
+  .footer {
+    padding: 48px var(--gutter) 32px;
+  }
+  .cols {
+    gap: 40px;
+  }
+}

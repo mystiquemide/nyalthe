@@ -17,10 +17,32 @@ const mono = IBM_Plex_Mono({
   display: 'swap',
 })
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : 'http://localhost:3000')
+
+const description =
+  'Nyalthe settles event-based payouts on Starknet while keeping the claimant and amount protected.'
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  applicationName: 'Nyalthe',
   title: 'Nyalthe · Public proof for private claims',
-  description:
-    'Nyalthe settles event-based payouts on Starknet while keeping the claimant and amount protected.',
+  description,
+  openGraph: {
+    type: 'website',
+    siteName: 'Nyalthe',
+    url: '/',
+    title: 'Nyalthe · Public proof for private claims',
+    description,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Nyalthe · Public proof for private claims',
+    description,
+  },
 }
 
 export default function RootLayout({
@@ -32,6 +54,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${sans.variable} ${mono.variable}`}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <body>

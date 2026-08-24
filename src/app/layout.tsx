@@ -24,7 +24,7 @@ const siteUrl =
     : 'http://localhost:3000')
 
 const description =
-  'Nyalthe settles event-based payouts on Starknet while keeping the claimant and amount protected.'
+  'Nyalthe settles event-based payouts on Starknet while keeping the claimant protected.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

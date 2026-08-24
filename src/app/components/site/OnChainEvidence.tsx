@@ -33,7 +33,7 @@ const STEPS = [
     name: "Settle privately",
     hash: "0x0283f9731387e31606acfc94650d868033ae6c5ca96913dedb29ef6f258d97a8",
     block: "13880350",
-    note: "Routed through STRK20. An open note is deposited, so the claimant and amount stay protected.",
+    note: "Routed through STRK20. An open note is deposited, so the claimant stays protected.",
     settle: true,
   },
 ];

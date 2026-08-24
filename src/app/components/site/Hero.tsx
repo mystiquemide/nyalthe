@@ -19,7 +19,7 @@ export default function Hero() {
         <h1 className={styles.title}>Public proof for private claims.</h1>
         <p className={styles.sub}>
           Nyalthe settles event-based payouts on Starknet while keeping the claimant
-          and the amount protected.
+          protected.
         </p>
         <div className={styles.actions}>
           <Link href="/app" className={styles.primary}>

@@ -2,7 +2,7 @@ import styles from "./PrivateByDesign.module.css";
 
 const PROTECTED = [
   "The claimant's identity and receiving address",
-  "The payout amount credited to the claimant",
+  "The link between the claimant and their payout",
   "Movement of funds inside the privacy pool",
 ];
 
@@ -22,8 +22,7 @@ export default function PrivateByDesign() {
           <p className={styles.intro}>
             Nyalthe does not hide the parts that make a claim trustworthy. The policy, the
             event that triggers it, and the settlement logic are all verifiable on Starknet.
-            What stays private is the part that should: who receives the payout, and how
-            much they receive.
+            What stays private is the part that should: who receives the payout.
           </p>
         </div>
 
@@ -51,7 +50,7 @@ export default function PrivateByDesign() {
 
         <p className={styles.note}>
           One honest edge: depositing into and withdrawing from the pool are visible
-          on-chain. Nyalthe protects the claimant and the amount, not the fact that a
+          on-chain. Nyalthe protects the claimant and their receipt, not the fact that a
           privacy pool is being used.
         </p>
       </div>

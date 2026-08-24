@@ -28,7 +28,7 @@ const STEPS = [
     title: "Settle",
     img: "/img/step-settle.jpg",
     alt: "Smiling children in a community",
-    text: "The payout settles privately into an open note. The claimant and amount stay protected.",
+    text: "The payout settles privately into an open note, so the claimant stays protected.",
   },
 ];
 

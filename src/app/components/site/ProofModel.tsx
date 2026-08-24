@@ -9,7 +9,7 @@ const PUBLIC_ROWS = [
 
 const PROTECTED_ROWS = [
   { k: "Claimant", v: "•••••••••", shield: true },
-  { k: "Payout amount", v: "••• STRK", shield: true },
+  { k: "Receiving address", v: "•••••••••", shield: true },
   { k: "Settlement", v: "Open note in pool", shield: false },
   { k: "Proof held by", v: "Claimant", shield: false },
 ];
@@ -24,7 +24,7 @@ export default function ProofModel() {
           <p className={styles.intro}>
             Every claim produces two kinds of proof. Anyone can verify that a policy was
             funded and settled correctly on Starknet. Only the claimant can prove they
-            received the payout, and neither their identity nor the amount is exposed.
+            received the payout, without revealing who they are.
           </p>
         </div>
 

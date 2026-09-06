@@ -35,6 +35,19 @@ const STEPS = [
     block: "14469553",
     note: "The contract authorizes the claim. The claimant can now settle privately.",
   },
+  {
+    name: "Fund through the pool",
+    hash: "0x12c5bfe20b8bd8c0c0a138ea227185a2e8eb1392c83c0af71bada2e1cc0c6e1",
+    block: "14472845",
+    note: "A private withdrawal routes the 1 STRK payout from the pool into the contract.",
+  },
+  {
+    name: "Settle privately",
+    hash: "0x6a3fd555fa1adaf7e42138958ca5b31dc39c1f78f45c98026e3ad6debb07697",
+    block: "14475821",
+    note: "Through STRK20: an open note is deposited for the claimant and the contract settles. Policy #1 is SETTLED.",
+    settle: true,
+  },
 ];
 
 function short(hash: string) {
@@ -50,9 +63,8 @@ export default function OnChainEvidence() {
           <h2 className={styles.h2}>Real transactions, not a demo</h2>
           <p className={styles.intro}>
             Nothing here is mocked. This is Nyalthe policy #1 on Starknet mainnet, taken
-            from deployment to an authorized claim. Every hash is live on-chain and opens in
-            the block explorer. The private settlement runs through the STRK20 pool in the
-            claim workspace.
+            from deployment to a private settlement through the STRK20 pool. Every hash
+            is live on-chain and opens in the block explorer.
           </p>
         </div>
 
@@ -73,7 +85,10 @@ export default function OnChainEvidence() {
 
         <ol className={styles.timeline}>
           {STEPS.map((s) => (
-            <li key={s.hash} className={styles.step}>
+            <li
+              key={s.hash}
+              className={`${styles.step} ${s.settle ? styles.settle : ""}`}
+            >
               <span className={styles.node} aria-hidden />
               <div className={styles.stepBody}>
                 <div className={styles.stepTop}>

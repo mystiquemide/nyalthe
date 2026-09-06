@@ -38,7 +38,7 @@ Honest edge, stated plainly: deposits into and withdrawals from the pool are vis
 | Nyalthe contract | [`0x01f929480b99cb165550086e495036381166d63041773a60a055dff2fc51f687`](https://starkscan.co/contract/0x01f929480b99cb165550086e495036381166d63041773a60a055dff2fc51f687) |
 | Class hash | `0x073a3eb3964394234924c7b3ee0c13bd2b7fc4a5e195b3c83b61807ba2345a86` |
 | STRK20 pool | `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` |
-| Live policy | #1, event `weather-main`, payout 1 STRK, state CLAIM_AUTHORIZED |
+| Live policy | #1, event `weather-main`, payout 1 STRK, state **SETTLED** |
 
 ### Policy #1 lifecycle (all verified on-chain)
 
@@ -49,7 +49,8 @@ Honest edge, stated plainly: deposits into and withdrawals from the pool are vis
 | Fund reserve | [`0x016c7bf4…a988dfee`](https://starkscan.co/tx/0x016c7bf4a6adb8639ee1c67ee91004b91e851b0762949b202c192ac7a988dfee) |
 | Accept event | [`0x060bd0bc…136b26498`](https://starkscan.co/tx/0x060bd0bcfd5a927f36a41267bd99b393b51339df1167a631fdcf44c136b26498) |
 | Authorize claim | [`0x019ecc2a…d637c038`](https://starkscan.co/tx/0x019ecc2a0074fe53e7ef659ae347d4b09888a558860d87ff20ec21edd637c038) |
-| Settle privately | in the claim workspace, through the STRK20 pool |
+| Fund through the pool | [`0x12c5bfe2…cc0c6e1`](https://starkscan.co/tx/0x12c5bfe20b8bd8c0c0a138ea227185a2e8eb1392c83c0af71bada2e1cc0c6e1) |
+| **Settle privately** | [`0x6a3fd555…ebb07697`](https://starkscan.co/tx/0x6a3fd555fa1adaf7e42138958ca5b31dc39c1f78f45c98026e3ad6debb07697) |
 
 The full transaction list for scoring is in [`strk20.json`](strk20.json).
 
@@ -60,7 +61,9 @@ The demo is live at **https://nyalthe.vercel.app**.
 1. Open the [claim workspace](https://nyalthe.vercel.app/app). The policy card reads live from the mainnet contract.
 2. Connect a privacy-enabled wallet (Ready X) on Starknet mainnet. First-time users register a viewing key with the pool (one-time setup).
 3. Shield STRK into the pool.
-4. Settle policy #1: stage 1 withdraws the payout to the contract, stage 2 settles it into an open note for the claimant. The policy state flips to SETTLED on-chain.
+4. Settle the authorized policy: stage 1 withdraws the payout to the contract, stage 2 settles it into an open note for the claimant. The policy state flips to SETTLED on-chain.
+
+Policy #1 has already been settled end-to-end on mainnet - the workspace reads it live.
 
 ## Trust model
 

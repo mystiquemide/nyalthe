@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import SiteNav from "../components/site/SiteNav";
-import WalletAccountV6Tag from "../components/client/WalletHandle/WalletAccountV6Tag";
+import ClaimWorkspace from "../components/client/WalletHandle/ClaimWorkspace";
 import styles from "./app.module.css";
 
 export const metadata: Metadata = {
   title: "Claim workspace · Nyalthe",
   description:
-    "Connect a Starknet wallet to inspect a policy and settle an authorized claim privately.",
+    "Inspect a policy on Starknet and settle an authorized claim privately through the STRK20 privacy pool.",
 };
 
 export default function AppPage() {
@@ -19,11 +19,12 @@ export default function AppPage() {
             <p className={styles.eyebrow}>Claim workspace</p>
             <h1 className={styles.title}>Settle an authorized claim, privately</h1>
             <p className={styles.sub}>
-              Connect a Starknet wallet to read the policy on-chain and complete the
-              protected payout through the STRK20 privacy pool.
+              The policy below is read live from the Nyalthe contract on Starknet.
+              Connect a privacy-enabled wallet to move the payout through the STRK20
+              pool and settle it into an open note, so the claimant stays protected.
             </p>
           </header>
-          <WalletAccountV6Tag />
+          <ClaimWorkspace />
         </div>
       </main>
     </>

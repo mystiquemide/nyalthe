@@ -1,27 +1,28 @@
 import { ProviderInterface, RpcProvider } from "starknet";
 
-// ─── Example config — swap these for your own token / pool / helper ─────────
-
-// DEMO VALUE: the ERC-20 this starter shields. Replace with the token your app
-// moves privately (STRK on Starknet here).
+// STRK token moved through the STRK20 privacy pool.
 export const addrSTRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
+
+// Nyalthe policy contract, deployed per network.
 export const NyaltheSepoliaAddress = "0x07426e95949ac5bdc723237952e0a344c333ea4adb5968ea8a65b2b517a42a19";
 export const NyaltheMainnetAddress = "0x01f929480b99cb165550086e495036381166d63041773a60a055dff2fc51f687";
+
 // Resolve the Nyalthe policy contract for a frontend provider index (0 = Mainnet,
 // 2 = Sepolia).
 export function nyaltheAddressForIndex(index: number): string {
     if (index === 0) return NyaltheMainnetAddress;
     return NyaltheSepoliaAddress;
 }
+
+// The policy the claim workspace settles.
 export const NyalthePolicyId = process.env.NEXT_PUBLIC_NYALTHE_POLICY_ID ?? "0x1";
 export const NyalthePayoutWei = process.env.NEXT_PUBLIC_NYALTHE_PAYOUT_WEI ?? "1000000000000000000";
 export const NyaltheClaimantAddress = process.env.NEXT_PUBLIC_NYALTHE_CLAIMANT_ADDRESS ?? "0x066c07d563dac5e1017a8a54cd0e63c7a51e2d205d48611a91ce9f52f2efceaa";
 
 const alchemyKey = process.env.NEXT_PUBLIC_PROVIDER_URL;
 // Keyless fallback uses Cartridge's public Starknet RPC. It supports the full
-// method set (starknet_call, receipts) with permissive CORS, unlike the previous
-// drpc endpoint which load-balances across backends that intermittently reject
-// starknet_call with -32601. Set NEXT_PUBLIC_PROVIDER_URL to use Alchemy instead.
+// method set (starknet_call, receipts) with permissive CORS. Set
+// NEXT_PUBLIC_PROVIDER_URL to use Alchemy instead.
 const mainnetRpc = alchemyKey
     ? `https://starknet-mainnet.g.alchemy.com/v2/${alchemyKey}`
     : "https://api.cartridge.gg/x/starknet/mainnet";
@@ -30,39 +31,12 @@ const sepoliaRpc = alchemyKey
     : "https://api.cartridge.gg/x/starknet/sepolia";
 
 // Frontend RPC providers, indexed. The STRK20 privacy pool lives on Mainnet (0)
-// and Sepolia (2); index 1 is a spare public testnet endpoint. NEXT_PUBLIC_PROVIDER_URL
-// is your Alchemy key (see .env.example).
+// and Sepolia (2).
 export const myFrontendProviders: ProviderInterface[] = [
     new RpcProvider({ nodeUrl: mainnetRpc }),
     new RpcProvider({ nodeUrl: sepoliaRpc }),
     new RpcProvider({ nodeUrl: sepoliaRpc })];
 
-// ─── Example anonymizer (echo helper) ───────────────────────────────────────
-// DEMO CONTRACT: StrkInvokeHelper (cairo/src/lib.cairo) just round-trips STRK
-// through an open note to exercise the privacy_invoke flow end to end. Replace
-// with your real anonymizer that performs an actual protocol action.
-
-// DEMO VALUE: echo helper deployed on Mainnet.
-export const Strk20EchoHelperAddress = "0x78ae662e0cc6d1ab2cfeaf2a51ba8783d88e31886f88a794d142f95a6f8735b";
-
-// Echo helper on Sepolia — set NEXT_PUBLIC_STRK20_ECHO_HELPER_SEPOLIA to enable the
-// Echo action there. "0x0" = not deployed (the action stays disabled). Deploy a fresh
-// instance from the Echo tab, then paste the address into .env.local.
-export const Strk20EchoHelperSepolia = process.env.NEXT_PUBLIC_STRK20_ECHO_HELPER_SEPOLIA ?? "0x0";
-
-// Declared class hash of the echo helper (Mainnet + Sepolia). Deploying a fresh
-// instance (no constructor args) needs only this class hash + a signed UDC deploy.
-// See cairo/address.md.
-export const Strk20EchoHelperClassHash = "0x2a4482a13cb7f70dce6f7ba99c4ee6ce404379abeddd9b831b6bf24eb71e137";
-
-// Resolve the echo helper for a frontend provider index (0 = Mainnet, 2 = Sepolia).
-// Returns "0x0" when no helper is deployed on that network.
-export function echoHelperForIndex(index: number): string {
-    if (index === 0) return Strk20EchoHelperAddress;
-    if (index === 2) return Strk20EchoHelperSepolia;
-    return "0x0";
-}
-
 // Frontend provider indices where the STRK20 privacy pool is available, mapped to a
-// display name. Used to gate the WalletAccountV6 STRK20 actions.
+// display name. Used to gate the STRK20 wallet actions.
 export const Strk20Networks: Record<number, string> = { 0: "MAINNET", 2: "SEPOLIA" };

@@ -202,7 +202,7 @@ export default function WalletAccountV6Tag() {
       return undefined;
     }
     if (!isStrk20Network) {
-      setResult(errorResult("Switch Ready X to Starknet Sepolia before settling policy 1."));
+      setResult(errorResult(`Switch Ready X to Starknet ${networkName ?? "Mainnet or Sepolia"} before settling the policy.`));
       return undefined;
     }
     setResult({ status: "pending", title: "Checking STRK20 settlement", note: "Running wallet simulation before submission." });
@@ -345,13 +345,14 @@ export default function WalletAccountV6Tag() {
     setResultComplex(null);
     setVerdictComplex(null);
     if (!myWalletAccount) {
-      setResultComplex(errorResult("Connect Ready X before continuing policy 1 settlement."));
+      setResultComplex(errorResult("Connect Ready X before continuing policy settlement."));
       return;
     }
+    const nyaltheAddress = constants.nyaltheAddressForIndex(myFrontendProviderIndex);
     const provider = myWalletAccount.provider;
     try {
       const policyResponse = await provider.callContract({
-        contractAddress: constants.NyaltheSepoliaAddress,
+        contractAddress: nyaltheAddress,
         entrypoint: "get_policy",
         calldata: [constants.NyalthePolicyId],
       }, "latest");
@@ -375,12 +376,12 @@ export default function WalletAccountV6Tag() {
       const balanceResponse = await provider.callContract({
         contractAddress: TOKEN,
         entrypoint: "balance_of",
-        calldata: [constants.NyaltheSepoliaAddress],
+        calldata: [nyaltheAddress],
       }, "latest");
       const helperBalance = num.toBigInt(balanceResponse[0]) + (num.toBigInt(balanceResponse[1] ?? 0) << 128n);
       if (helperBalance === 0n) {
         await submit(
-          buildPayoutFundingActions({ contractAddress: constants.NyaltheSepoliaAddress, tokenAddress: TOKEN }),
+          buildPayoutFundingActions({ contractAddress: nyaltheAddress, tokenAddress: TOKEN }),
           setResultComplex,
           "Stage 1 of 2: fund Nyalthe with 1 STRK",
         );
@@ -393,7 +394,7 @@ export default function WalletAccountV6Tag() {
       }
       await submit(
         buildSettlementActions({
-          contractAddress: constants.NyaltheSepoliaAddress,
+          contractAddress: nyaltheAddress,
           claimantAddress: constants.NyaltheClaimantAddress,
           tokenAddress: TOKEN,
           policyId: constants.NyalthePolicyId,

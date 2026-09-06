@@ -16,8 +16,6 @@ import { buildPayoutFundingActions, buildSettlementActions } from "@/lib/strk20/
 const TOKEN = constants.addrSTRK;
 // DEMO amounts, in the token's smallest unit (1e18 = 1 STRK). Replace with real
 // UX (user-entered amounts) in your app.
-const TEN_STRK = 10n * 10n ** 18n;
-const FIVE_STRK = 5n * 10n ** 18n;
 const ONE_STRK = 1n * 10n ** 18n;
 
 // Format a felt amount (STRK, 18 decimals) as a human STRK string ("10", "1.5").
@@ -310,9 +308,9 @@ export default function WalletAccountV6Tag() {
   const handleShield = async () => {
     setResultShield(null);
     const actions: WALLET_API.STRK20_ACTION[] = [
-      { type: "deposit", token: TOKEN, amount: num.toHex(TEN_STRK) },
+      { type: "deposit", token: TOKEN, amount: num.toHex(ONE_STRK) },
     ];
-    await submit(actions, setResultShield, "10 STRK");
+    await submit(actions, setResultShield, "1 STRK");
   };
 
   const handleUnshield = async () => {
@@ -454,10 +452,10 @@ export default function WalletAccountV6Tag() {
       const noteId = ev.keys[1] as string;
       const amount = ev.data[0] as string;
       const caller = ev.data[1] as string;
-      const amountOk = num.toBigInt(amount) === FIVE_STRK;
+      const amountOk = num.toBigInt(amount) === ONE_STRK;
       return {
         ok: amountOk,
-        title: amountOk ? "Echo verified - open note filled with 5 STRK" : "Event found, but amount mismatch",
+        title: amountOk ? "Settlement verified - open note filled with 1 STRK" : "Event found, but amount mismatch",
         rows: [
           { label: "note_id", value: shortHex(noteId), ok: true },
           { label: "amount", value: `${fmtStrk(num.toBigInt(amount))} STRK`, ok: amountOk },
@@ -534,7 +532,7 @@ export default function WalletAccountV6Tag() {
     TabKey,
     { label: string; value: string; token: string; hint: string; cta: string; onRun: () => void; result: ActionResult | null; disabled: boolean }
   > = {
-    shield: { label: "You're shielding", value: "10", token: "STRK", hint: "Deposit into the privacy pool", cta: "Shield", onRun: handleShield, result: resultShield, disabled: !isStrk20Network },
+    shield: { label: "You're shielding", value: "1", token: "STRK", hint: "Deposit into the privacy pool", cta: "Shield", onRun: handleShield, result: resultShield, disabled: !isStrk20Network },
     send: { label: "You're sending - to self", value: "1", token: "STRK", hint: "Private in-pool transfer", cta: "Self transfer", onRun: handleSelfTransfer, result: resultTransfer, disabled: !isStrk20Network },
     unshield: { label: "You're unshielding", value: "1", token: "STRK", hint: "Withdraw to your account", cta: "Unshield", onRun: handleUnshield, result: resultUnshield, disabled: !isStrk20Network },
     echo: { label: "Nyalthe protected payout", value: fmtStrk(num.toBigInt(constants.NyalthePayoutWei)), token: "STRK", hint: "Settle the authorized policy into an open note", cta: `Settle policy ${constants.NyalthePolicyId}`, onRun: handleComplex, result: resultComplex, disabled: !isStrk20Network },

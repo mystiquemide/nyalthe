@@ -165,6 +165,31 @@
   line-height: 1;
   color: var(--ink);
 }
+.bigInput {
+  font-family: var(--font-sans);
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  max-width: 220px;
+  padding: 0;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.bigInput::-webkit-outer-spin-button,
+.bigInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.bigInput:focus {
+  color: var(--aqua-hi);
+}
 .tokenPill {
   display: inline-flex;
   align-items: center;

@@ -13,7 +13,6 @@ import { buildPayoutFundingActions, buildSettlementActions } from "@/lib/strk20/
 
 // All actions move STRK through the STRK20 privacy pool.
 const TOKEN = constants.addrSTRK;
-const ONE_STRK = 1n * 10n ** 18n;
 
 // Human-readable policy states, mirroring the Cairo contract.
 const POLICY_STATES: Record<string, { label: string; tone: "pending" | "action" | "done" | "dead" }> = {
@@ -176,6 +175,8 @@ export default function ClaimWorkspace() {
   // Hash of a settlement completed in this session, kept to enrich the settled card.
   const [settleTxHash, setSettleTxHash] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("settle");
+  // User-entered shield amount in whole STRK (the pool fee is on top of it).
+  const [shieldAmount, setShieldAmount] = useState("13");
 
   // Read the live policy from the contract. Safe to call before any wallet is
   // connected: it goes through the frontend provider for the current network.
@@ -295,10 +296,16 @@ export default function ClaimWorkspace() {
   // that later cover the payout leg of the settlement.
   const handleShield = async () => {
     setResultShield(null);
+    const whole = Number(shieldAmount);
+    if (!Number.isFinite(whole) || whole <= 0) {
+      setResultShield(errorResult("Enter an amount of STRK to shield."));
+      return;
+    }
+    const amount = BigInt(Math.floor(whole * 1e6)) * 10n ** 12n;
     const actions: WALLET_API.STRK20_ACTION[] = [
-      { type: "deposit", token: TOKEN, amount: num.toHex(ONE_STRK) },
+      { type: "deposit", token: TOKEN, amount: num.toHex(amount) },
     ];
-    await submit(actions, setResultShield, "1 STRK", "Preparing shield deposit");
+    await submit(actions, setResultShield, `${whole} STRK`, "Preparing shield deposit");
   };
 
   // Settle the authorized policy. Two stages, both chosen from on-chain state:
@@ -455,10 +462,10 @@ export default function ClaimWorkspace() {
   > = {
     shield: {
       label: "Shielding into the privacy pool",
-      value: "1",
+      value: shieldAmount,
       token: "STRK",
-      hint: "Creates the private notes that cover the payout leg",
-      cta: "Shield 1 STRK",
+      hint: "Creates the private notes that cover the payout leg. Pool fee is on top.",
+      cta: `Shield ${shieldAmount || "…"} STRK`,
       onRun: handleShield,
       result: resultShield,
       disabled: !isStrk20Network,
@@ -561,7 +568,20 @@ export default function ClaimWorkspace() {
         <div className={styles.inputBlock}>
           <div className={styles.inputLabel}>{active.label}</div>
           <div className={styles.inputMain}>
-            <div className={styles.bigValue}>{active.value}</div>
+            {tab === "shield" ? (
+              <input
+                className={styles.bigInput}
+                type="number"
+                inputMode="decimal"
+                min="1"
+                step="1"
+                value={shieldAmount}
+                onChange={(e) => setShieldAmount(e.target.value)}
+                aria-label="Amount to shield in STRK"
+              />
+            ) : (
+              <div className={styles.bigValue}>{active.value}</div>
+            )}
             <span className={styles.tokenPill}>
               <span className={styles.tokenDot}>
                 <StrkCoin size={22} />
@@ -569,10 +589,17 @@ export default function ClaimWorkspace() {
               {active.token}
             </span>
           </div>
-          <div className={styles.subLine}>
-            <span>{active.hint}</span>
-            <span className={styles.subMono}>{shortWallet}</span>
-          </div>
+          {tab === "shield" ? (
+            <div className={styles.subLine}>
+              <span>{active.hint}</span>
+              <span className={styles.subMono}>{shortWallet}</span>
+            </div>
+          ) : (
+            <div className={styles.subLine}>
+              <span>{active.hint}</span>
+              <span className={styles.subMono}>{shortWallet}</span>
+            </div>
+          )}
         </div>
 
         <div className={styles.feeRow}>

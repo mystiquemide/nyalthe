@@ -14,10 +14,12 @@ export function nyaltheAddressForIndex(index: number): string {
     return NyaltheSepoliaAddress;
 }
 
-// The policy the claim workspace settles.
-export const NyalthePolicyId = process.env.NEXT_PUBLIC_NYALTHE_POLICY_ID ?? "0x1";
-export const NyalthePayoutWei = process.env.NEXT_PUBLIC_NYALTHE_PAYOUT_WEI ?? "1000000000000000000";
-export const NyaltheClaimantAddress = process.env.NEXT_PUBLIC_NYALTHE_CLAIMANT_ADDRESS ?? "0x066c07d563dac5e1017a8a54cd0e63c7a51e2d205d48611a91ce9f52f2efceaa";
+// The policy the claim workspace settles. Hardcoded: the production policy is
+// deployed and verified on-chain; an env override would silently break the app
+// if it pointed at a nonexistent policy.
+export const NyalthePolicyId = "0x1";
+export const NyalthePayoutWei = "1000000000000000000";
+export const NyaltheClaimantAddress = "0x066c07d563dac5e1017a8a54cd0e63c7a51e2d205d48611a91ce9f52f2efceaa";
 
 const alchemyKey = process.env.NEXT_PUBLIC_PROVIDER_URL;
 // Keyless fallback uses Cartridge's public Starknet RPC. It supports the full

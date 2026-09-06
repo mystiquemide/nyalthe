@@ -2,7 +2,7 @@ import Link from "next/link";
 import styles from "./Footer.module.css";
 
 const CONTRACT =
-  "0x07426e95949ac5bdc723237952e0a344c333ea4adb5968ea8a65b2b517a42a19";
+  "0x01f929480b99cb165550086e495036381166d63041773a60a055dff2fc51f687";
 
 export default function Footer() {
   return (
@@ -45,7 +45,7 @@ export default function Footer() {
                 GitHub
               </a>
               <a
-                href={`https://sepolia.starkscan.co/contract/${CONTRACT}`}
+                href={`https://starkscan.co/contract/${CONTRACT}`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -58,7 +58,8 @@ export default function Footer() {
         <div className={styles.bottom}>
           <p className={styles.copy}>© 2026 Nyalthe</p>
           <p className={styles.note}>
-            Starknet Sepolia testnet. Built for the STRK20 Private Sprint.
+            Starknet mainnet, live through the STRK20 privacy pool. Built for the STRK20
+            Private Sprint.
           </p>
         </div>
       </div>

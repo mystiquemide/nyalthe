@@ -94,7 +94,7 @@ export default function SecurityPage() {
           </div>
           <p className={styles.note}>
             Every guard is covered by an automated Cairo test suite, and the policy is
-            deployed and exercised on Starknet Sepolia.
+            deployed and exercised on Starknet mainnet.
           </p>
         </section>
 

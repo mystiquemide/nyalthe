@@ -56,7 +56,7 @@ export default function Security() {
         <p className={styles.foot}>
           Every transition is guarded by explicit state checks and covered by the
           contract's Cairo test suite, with the policy deployed and exercised on Starknet
-          Sepolia.
+          mainnet.
         </p>
       </div>
     </section>

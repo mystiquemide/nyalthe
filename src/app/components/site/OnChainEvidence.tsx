@@ -1,40 +1,39 @@
 import styles from "./OnChainEvidence.module.css";
 
-const EXPLORER = "https://sepolia.starkscan.co";
+const EXPLORER = "https://starkscan.co";
 const CONTRACT =
-  "0x07426e95949ac5bdc723237952e0a344c333ea4adb5968ea8a65b2b517a42a19";
+  "0x01f929480b99cb165550086e495036381166d63041773a60a055dff2fc51f687";
 
 const STEPS = [
   {
+    name: "Deploy contract",
+    hash: "0x0309d23b110ad8c0cd8d557a4a8c1f3ec9baf8cc8a832558b6e69526520b9a3e",
+    block: "14469458",
+    note: "The Nyalthe contract goes live on Starknet mainnet, pinned to the STRK20 pool.",
+  },
+  {
     name: "Create policy",
-    hash: "0x03450f813833f7fae886733ddebce1bb04bdc57643c53ffd7a54bb3ba1198767",
-    block: "13863925",
-    note: "Policy #1 opened for event weather-active.",
+    hash: "0x009dde7bc3816ddaa4350679004578b3d57a99f97c29342ff63f4ccc0a042350",
+    block: "14469536",
+    note: "Policy #1 opened for event weather-main, payout 1 STRK.",
   },
   {
     name: "Fund reserve",
-    hash: "0x05bc205d591ee33d46323aa5750743a6da2bebd961d11ee53255107863560a2c",
-    block: "13863930",
-    note: "The payout reserve is locked for the policy.",
+    hash: "0x016c7bf4a6adb8639ee1c67ee91004b91e851b0762949b202c192ac7a988dfee",
+    block: "14469543",
+    note: "The policy is marked funded, locking the payout path.",
   },
   {
     name: "Accept event",
-    hash: "0x024a931c1b564e8eb13daa7888cfb8eaaa4f282e54156968517fee3d2d401019",
-    block: "13863934",
-    note: "The authorized signer submitted the event record.",
+    hash: "0x060bd0bcfd5a927f36a41267bd99b393b51339df1167a631fdcf44c136b26498",
+    block: "14469548",
+    note: "The authorized event authority submits the weather-main event record.",
   },
   {
     name: "Authorize claim",
-    hash: "0x047fa503bfedbbc2a9b7091f6eb24840edff34dfb662f953f4334cd15ce90a48",
-    block: "13863939",
-    note: "The contract authorized the eligible claimant.",
-  },
-  {
-    name: "Settle privately",
-    hash: "0x0283f9731387e31606acfc94650d868033ae6c5ca96913dedb29ef6f258d97a8",
-    block: "13880350",
-    note: "Routed through STRK20. An open note is deposited, so the claimant stays protected.",
-    settle: true,
+    hash: "0x019ecc2a0074fe53e7ef659ae347d4b09888a558860d87ff20ec21edd637c038",
+    block: "14469553",
+    note: "The contract authorizes the claim. The claimant can now settle privately.",
   },
 ];
 
@@ -50,9 +49,10 @@ export default function OnChainEvidence() {
           <p className={styles.eyebrow}>On-chain evidence</p>
           <h2 className={styles.h2}>Real transactions, not a demo</h2>
           <p className={styles.intro}>
-            Nothing here is mocked. This is Nyalthe policy #1 on Starknet Sepolia, taken
-            from creation to a private settlement. Every hash is live on-chain and opens in
-            the block explorer.
+            Nothing here is mocked. This is Nyalthe policy #1 on Starknet mainnet, taken
+            from deployment to an authorized claim. Every hash is live on-chain and opens in
+            the block explorer. The private settlement runs through the STRK20 pool in the
+            claim workspace.
           </p>
         </div>
 
@@ -68,15 +68,12 @@ export default function OnChainEvidence() {
               {CONTRACT}
             </a>
           </div>
-          <span className={styles.net}>Starknet Sepolia</span>
+          <span className={styles.net}>Starknet mainnet</span>
         </div>
 
         <ol className={styles.timeline}>
           {STEPS.map((s) => (
-            <li
-              key={s.hash}
-              className={`${styles.step} ${s.settle ? styles.settle : ""}`}
-            >
+            <li key={s.hash} className={styles.step}>
               <span className={styles.node} aria-hidden />
               <div className={styles.stepBody}>
                 <div className={styles.stepTop}>

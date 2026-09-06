@@ -1,10 +1,10 @@
 import styles from "./ProofModel.module.css";
 
 const PUBLIC_ROWS = [
-  { k: "Network", v: "Starknet Sepolia" },
-  { k: "Contract", v: "0x0742…2a19" },
+  { k: "Network", v: "Starknet mainnet" },
+  { k: "Contract", v: "0x01f9…1f687" },
   { k: "Policy", v: "#1" },
-  { k: "Event", v: "weather-active" },
+  { k: "Event", v: "weather-main" },
 ];
 
 const PROTECTED_ROWS = [

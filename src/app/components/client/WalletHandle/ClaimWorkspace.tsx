@@ -228,8 +228,18 @@ export default function ClaimWorkspace() {
     try {
       await myWalletAccount.strk20PrepareInvoke(actions, true);
     } catch (error: any) {
-      setResult(errorResult(`Wallet simulation failed: ${error?.message ?? error?.toString?.() ?? String(error)}`));
-      return undefined;
+      const msg = error?.message ?? error?.toString?.() ?? String(error);
+      // NOT_REGISTERED is expected before the wallet's first real action: wallets
+      // handle pool registration during the actual submission, not the simulation.
+      if (!msg.includes("NOT_REGISTERED")) {
+        setResult(errorResult(`Wallet simulation failed: ${msg}`));
+        return undefined;
+      }
+      setResult({
+        status: "pending",
+        title: preparingTitle,
+        note: "First STRK20 action for this account. Confirm in your wallet: it registers a viewing key, then submits.",
+      });
     }
     let txH: string;
     try {

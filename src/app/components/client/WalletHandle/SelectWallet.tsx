@@ -64,7 +64,16 @@ export default function SelectWallet({ variant = "ctaBig" }: { variant?: "nav" |
   async function handleSelectedWallet(selectedWallet: WalletWithStarknetFeatures) {
     setMyWallet(selectedWallet); // zustand
     console.log("Trying to connect wallet=", selectedWallet);
-    const myWA = await WalletAccountV6.connect(myFrontendProviders[2], selectedWallet);
+    // Ask the wallet which chain it is on before building the account, so the
+    // account's provider matches the wallet's network (mainnet index 0, sepolia 2).
+    let chainIdAtConnect: string = SNconstants.StarknetChainId.SN_MAIN as string;
+    try {
+      chainIdAtConnect = (await walletV6.requestChainId(selectedWallet)) as string;
+    } catch (e) {
+      console.warn("requestChainId failed, defaulting to mainnet", e);
+    }
+    const providerIndex = chainIdAtConnect === SNconstants.StarknetChainId.SN_MAIN ? 0 : 2;
+    const myWA = await WalletAccountV6.connect(myFrontendProviders[providerIndex], selectedWallet);
     setMyWalletAccount(myWA);
     console.log("WalletAccount created=", myWA);
     const result = await walletV6.requestAccounts(selectedWallet);
@@ -80,10 +89,9 @@ export default function SelectWallet({ variant = "ctaBig" }: { variant?: "nav" |
     const isConnectedWallet: boolean = await walletV6.getPermissions(selectedWallet).then((res: any) => (res as WALLET_API.Permission[]).includes(WALLET_API.Permission.ACCOUNTS));
     setConnected(isConnectedWallet); // zustand
     if (isConnectedWallet) {
-      const chainId = (await walletV6.requestChainId(selectedWallet)) as string;
-      setChain(chainId);
-      setCurrentFrontendProviderIndex(chainId === SNconstants.StarknetChainId.SN_MAIN ? 0 : 2);
-      console.log("change Provider index to :", myFrontendProviderIndex);
+      setChain(chainIdAtConnect);
+      setCurrentFrontendProviderIndex(providerIndex);
+      console.log("change Provider index to :", providerIndex);
     }
     setWalletApi(await walletV6.supportedSpecs(selectedWallet));
   }

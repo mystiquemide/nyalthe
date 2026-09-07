@@ -17,7 +17,7 @@ export function nyaltheAddressForIndex(index: number): string {
 // The policy the claim workspace settles. Hardcoded: the production policy is
 // deployed and verified on-chain; an env override would silently break the app
 // if it pointed at a nonexistent policy.
-export const NyalthePolicyId = "0x1";
+export const NyalthePolicyId = "0x2";
 export const NyalthePayoutWei = "1000000000000000000";
 export const NyaltheClaimantAddress = "0x066c07d563dac5e1017a8a54cd0e63c7a51e2d205d48611a91ce9f52f2efceaa";
 

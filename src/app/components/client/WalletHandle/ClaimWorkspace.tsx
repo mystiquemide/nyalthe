@@ -651,7 +651,7 @@ export default function ClaimWorkspace() {
             <SelectWallet variant="ctaBig" />
             <p className={styles.gateNote}>
               No privacy wallet yet? The policy card above is live on-chain, and policy
-              {" "}{constants.NyalthePolicyId} has already settled. A Ready X wallet is only
+              {" "}{constants.NyalthePolicyId} is {settled ? "already settled" : "authorized and ready to settle"}. A Ready X wallet is only
               needed to run a settlement yourself.
             </p>
           </>

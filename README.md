@@ -38,7 +38,7 @@ Honest edge, stated plainly: deposits into and withdrawals from the pool are vis
 | Nyalthe contract | [`0x01f929480b99cb165550086e495036381166d63041773a60a055dff2fc51f687`](https://starkscan.co/contract/0x01f929480b99cb165550086e495036381166d63041773a60a055dff2fc51f687) |
 | Class hash | `0x073a3eb3964394234924c7b3ee0c13bd2b7fc4a5e195b3c83b61807ba2345a86` |
 | STRK20 pool | `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` |
-| Live policy | #1, event `weather-main`, payout 1 STRK, state **SETTLED** |
+| Live policy | #2, event `weather-main-2`, payout 1 STRK |
 
 ### Policy #1 lifecycle (all verified on-chain)
 
@@ -58,11 +58,12 @@ The full transaction list for scoring is in [`strk20.json`](strk20.json).
 
 The demo is live at **https://nyalthe.vercel.app**.
 
-1. Open the [claim workspace](https://nyalthe.vercel.app/app). The policy card reads live from the mainnet contract: state SETTLED, payout 1 STRK, event `weather-main`.
+1. Open the [claim workspace](https://nyalthe.vercel.app/app). The policy card reads live from the mainnet contract.
 2. Connect a privacy-enabled wallet (Ready X, Wallet API >= 0.10.3) on Starknet mainnet. First-time users register a viewing key with the pool (one-time setup).
-3. Shield STRK into the pool and check shielded balances - both are live STRK20 pool actions.
+3. Shield STRK into the pool.
+4. Settle the authorized policy: stage 1 withdraws the payout to the contract through the pool, stage 2 settles it into an open note for the claimant. The policy state flips to SETTLED on-chain.
 
-Policy #1 has already been settled end-to-end on mainnet - the workspace reads its final state live, and every settlement transaction is linked above.
+Policy #1 was settled end-to-end on mainnet (its full transaction lifecycle is linked above). Policy #2 is the live policy the workspace settles now.
 
 ## Trust model
 

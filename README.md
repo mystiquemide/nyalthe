@@ -38,7 +38,7 @@ Honest edge, stated plainly: deposits into and withdrawals from the pool are vis
 | Nyalthe contract | [`0x01f929480b99cb165550086e495036381166d63041773a60a055dff2fc51f687`](https://starkscan.co/contract/0x01f929480b99cb165550086e495036381166d63041773a60a055dff2fc51f687) |
 | Class hash | `0x073a3eb3964394234924c7b3ee0c13bd2b7fc4a5e195b3c83b61807ba2345a86` |
 | STRK20 pool | `0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a` |
-| Live policy | #2, event `weather-main-2`, payout 1 STRK |
+| Live policy | #2, event `weather-main-2`, payout 1 STRK, state **SETTLED** |
 
 ### Policy #1 lifecycle (all verified on-chain)
 
@@ -52,6 +52,18 @@ Honest edge, stated plainly: deposits into and withdrawals from the pool are vis
 | Fund through the pool | [`0x12c5bfe2…cc0c6e1`](https://starkscan.co/tx/0x12c5bfe20b8bd8c0c0a138ea227185a2e8eb1392c83c0af71bada2e1cc0c6e1) |
 | **Settle privately** | [`0x6a3fd555…ebb07697`](https://starkscan.co/tx/0x6a3fd555fa1adaf7e42138958ca5b31dc39c1f78f45c98026e3ad6debb07697) |
 
+### Policy #2 lifecycle (all verified on-chain)
+
+The reserve for policy #2 was funded by direct transfer, so the settlement ran as a single pool operation.
+
+| Step | Transaction |
+|---|---|
+| Create policy | [`0x051c3d13…469fbed`](https://starkscan.co/tx/0x051c3d13c5368f4a9b8f63e224dff8c14d2c609b0491d79327ff0badd469fbed) |
+| Fund reserve | [`0x059415ed…2aa7f67`](https://starkscan.co/tx/0x059415ed4dad06e2215b6bf3a3f14a4314e8db675b3281a32d308590f2aa7f67) |
+| Accept event | [`0x055296bb…388c59`](https://starkscan.co/tx/0x055296bbfb7d1041e92ce00a9f7908169d8e4dfb96547fa9cba90cf3e6388c59) |
+| Authorize claim | [`0x021babc9…64c6bf`](https://starkscan.co/tx/0x021babc95d24835c67a470312232753bb78dcd650c65f32d2ac434fe2864c6bf) |
+| **Settle privately** | [`0x0652268f…d003d3`](https://starkscan.co/tx/0x0652268f00d0b6f89b8b52cd0159881e008ffb528929168b5b375ad751d003d3) |
+
 The full transaction list for scoring is in [`strk20.json`](strk20.json).
 
 ## Try it
@@ -60,10 +72,9 @@ The demo is live at **https://nyalthe.vercel.app**.
 
 1. Open the [claim workspace](https://nyalthe.vercel.app/app). The policy card reads live from the mainnet contract.
 2. Connect a privacy-enabled wallet (Ready X, Wallet API >= 0.10.3) on Starknet mainnet. First-time users register a viewing key with the pool (one-time setup).
-3. Shield STRK into the pool.
-4. Settle the authorized policy: stage 1 withdraws the payout to the contract through the pool, stage 2 settles it into an open note for the claimant. The policy state flips to SETTLED on-chain.
+3. Shield STRK into the pool and read shielded balances - both are live STRK20 pool actions.
 
-Policy #1 was settled end-to-end on mainnet (its full transaction lifecycle is linked above). Policy #2 is the live policy the workspace settles now.
+Both policies have been settled end-to-end on mainnet; the workspace reads policy #2's settled state live, and every settlement transaction is linked above.
 
 ## Trust model
 

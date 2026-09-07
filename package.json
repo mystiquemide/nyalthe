@@ -1,5 +1,5 @@
 {
-  "name": "wallet_account_for_starknet",
+  "name": "nyalthe",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -16,7 +16,7 @@
     "next": "^16.0.8",
     "react": "19.2.1",
     "react-dom": "19.2.1",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.4",
     "starknet": "10.4.0",
     "zustand": "^5.0.9"
   },

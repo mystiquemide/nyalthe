@@ -13,7 +13,7 @@ scarb --release build
 
 ARGS=(
   --contract-name Nyalthe
-  --package strk20_invoke_helper
+  --package nyalthe
   --constructor-calldata "$EVENT_AUTHORITY_ADDRESS" "$STRK20_POOL_ADDRESS"
   --account "$SNCAST_ACCOUNT"
   --network "$NETWORK"

@@ -6,8 +6,8 @@ cd "$ROOT"
 
 scarb --release build
 
-SIERRA="target/release/strk20_invoke_helper_Nyalthe.contract_class.json"
-CASM="target/release/strk20_invoke_helper_Nyalthe.compiled_contract_class.json"
+SIERRA="target/release/nyalthe_Nyalthe.contract_class.json"
+CASM="target/release/nyalthe_Nyalthe.compiled_contract_class.json"
 test -s "$SIERRA"
 test -s "$CASM"
 

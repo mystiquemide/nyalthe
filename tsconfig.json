@@ -35,12 +35,9 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/**/*",
-    "old/core",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "old/**/*",
-    "doc"
+    "node_modules"
   ]
 }

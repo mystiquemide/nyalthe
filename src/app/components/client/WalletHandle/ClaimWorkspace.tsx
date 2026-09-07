@@ -67,11 +67,14 @@ function prettyStatus(finality?: string, exec?: string): string {
 }
 
 // Turn a raw tx receipt into a readable receipt card (status, fee, events, hash).
+// A reverted tx surfaces the contract's own revert reason - the revert strings are
+// the product's vocabulary.
 function receiptToResult(txR: any, txH: string, amountLabel: string): ActionResult {
   const r = txR?.value ?? txR;
   const exec: string | undefined = r?.execution_status;
   const finality: string | undefined = r?.finality_status;
-  const reverted = exec === "REVERTED";
+  const revertReason: string | undefined = r?.revert_reason;
+  const reverted = exec === "REVERTED" || Boolean(revertReason);
   let feeStr: string | undefined;
   const feeRaw = r?.actual_fee?.amount ?? r?.actual_fee;
   try {
@@ -85,6 +88,9 @@ function receiptToResult(txR: any, txH: string, amountLabel: string): ActionResu
   rows.push({ label: "Status", value: prettyStatus(finality, exec) });
   if (feeStr) rows.push({ label: "Network fee", value: feeStr });
   if (evCount !== undefined) rows.push({ label: "Events", value: String(evCount) });
+  if (reverted && revertReason) {
+    rows.push({ label: "Reason", value: revertReason.replace(/^.*?:\s*/, "").slice(0, 120) });
+  }
   rows.push({ label: "Transaction", value: shortHex(txH), hash: txH });
   return {
     status: reverted ? "error" : "ok",
@@ -138,9 +144,28 @@ function balancesToResult(raw: any): ActionResult {
   };
 }
 
-// A failed / rejected action.
-function errorResult(msg: string): ActionResult {
-  return { status: "error", title: "Action failed", note: msg };
+// Translate raw wallet/RPC errors into what a person can act on. Unknown errors
+// pass through unchanged.
+function friendlyError(msg: string): string {
+  if (msg.includes("Contract not found")) {
+    return "Your wallet is on a different network than this policy. Switch to Starknet Mainnet and reconnect.";
+  }
+  if (msg.includes("Insufficient") || msg.includes("insufficient")) {
+    return "Not enough STRK in this wallet to cover the fee. Top up and try again.";
+  }
+  if (msg.includes("NOT_REGISTERED")) {
+    return "This account has no viewing key in the privacy pool yet. Use your wallet's own Shield action once, then retry.";
+  }
+  if (msg.includes("User aborted") || msg.includes("rejected") || msg.includes("Rejected")) {
+    return "You declined the action in your wallet. Nothing was sent.";
+  }
+  return msg;
+}
+
+// A failed / rejected action. The title names what failed so the next step is
+// obvious without parsing the note.
+function errorResult(msg: string, title = "Action failed"): ActionResult {
+  return { status: "error", title, note: friendlyError(msg) };
 }
 
 // Workspace actions: move funds into the pool, settle the claim, read balances.
@@ -215,17 +240,18 @@ export default function ClaimWorkspace() {
     actions: WALLET_API.STRK20_ACTION[],
     setResult: (r: ActionResult) => void,
     amountLabel: string,
-    preparingTitle: string
+    preparingTitle: string,
+    failTitle: string
   ): Promise<string | undefined> {
     if (!myWalletAccount) {
-      setResult(errorResult("No wallet connected."));
+      setResult(errorResult("No wallet connected. Connect Ready X to continue.", failTitle));
       return undefined;
     }
     if (!isStrk20Network) {
-      setResult(errorResult(`Switch your wallet to Starknet ${networkName ?? "Mainnet or Sepolia"} first.`));
+      setResult(errorResult(`Switch your wallet to Starknet ${networkName ?? "Mainnet or Sepolia"} first.`, failTitle));
       return undefined;
     }
-    setResult({ status: "pending", title: preparingTitle, note: "Running wallet simulation before submission." });
+    setResult({ status: "pending", title: preparingTitle, note: "Checking this action in your wallet before submitting." });
     try {
       await myWalletAccount.strk20PrepareInvoke(actions, true);
     } catch (error: any) {
@@ -233,7 +259,7 @@ export default function ClaimWorkspace() {
       // NOT_REGISTERED is expected before the wallet's first real action: wallets
       // handle pool registration during the actual submission, not the simulation.
       if (!msg.includes("NOT_REGISTERED")) {
-        setResult(errorResult(`Wallet simulation failed: ${msg}`));
+        setResult(errorResult(`The wallet check failed: ${msg}`, failTitle));
         return undefined;
       }
       setResult({
@@ -247,12 +273,13 @@ export default function ClaimWorkspace() {
       const r = await myWalletAccount.strk20InvokeTransaction(actions);
       txH = r.transaction_hash;
     } catch (error: any) {
-      setResult(errorResult(error?.message ?? error?.toString?.() ?? String(error)));
+      setResult(errorResult(error?.message ?? error?.toString?.() ?? String(error), failTitle));
       return undefined;
     }
     setResult({
       status: "pending",
       title: "Waiting for confirmation…",
+      note: "Private transactions take up to a minute to prove and submit.",
       rows: [
         { label: "Amount", value: amountLabel },
         { label: "Transaction", value: shortHex(txH), hash: txH },
@@ -269,9 +296,9 @@ export default function ClaimWorkspace() {
     } catch (error: any) {
       setResult({
         status: "error",
-        title: "Could not confirm transaction",
+        title: "Confirmation timed out",
         rows: [{ label: "Transaction", value: shortHex(txH), hash: txH }],
-        note: error?.message ?? error?.toString?.() ?? String(error),
+        note: "This can happen while the proof is still processing. Check the transaction on the explorer before retrying - it may have landed.",
       });
     }
     return txH;
@@ -281,14 +308,14 @@ export default function ClaimWorkspace() {
   const handleBalances = async () => {
     setResultBalances(null);
     if (!myWalletAccount) {
-      setResultBalances(errorResult("No wallet connected."));
+      setResultBalances(errorResult("Connect a Ready X wallet to read your balances.", "Balance check failed"));
       return;
     }
     try {
       const r = await myWalletAccount.strk20Balances([]);
       setResultBalances(balancesToResult(r));
     } catch (error: any) {
-      setResultBalances(errorResult(error?.message ?? error?.toString?.() ?? String(error)));
+      setResultBalances(errorResult(error?.message ?? error?.toString?.() ?? String(error), "Balance check failed"));
     }
   };
 
@@ -298,14 +325,14 @@ export default function ClaimWorkspace() {
     setResultShield(null);
     const whole = Number(shieldAmount);
     if (!Number.isFinite(whole) || whole <= 0) {
-      setResultShield(errorResult("Enter an amount of STRK to shield."));
+      setResultShield(errorResult("Enter an amount of STRK to shield.", "Shield failed"));
       return;
     }
     const amount = BigInt(Math.floor(whole * 1e6)) * 10n ** 12n;
     const actions: WALLET_API.STRK20_ACTION[] = [
       { type: "deposit", token: TOKEN, amount: num.toHex(amount) },
     ];
-    await submit(actions, setResultShield, `${whole} STRK`, "Preparing shield deposit");
+    await submit(actions, setResultShield, `${whole} STRK`, "Preparing shield deposit", "Shield failed");
   };
 
   // Settle the authorized policy. Two stages, both chosen from on-chain state:
@@ -314,7 +341,7 @@ export default function ClaimWorkspace() {
   const handleSettle = async () => {
     setResultSettle(null);
     if (!myWalletAccount) {
-      setResultSettle(errorResult("Connect a wallet to settle the claim."));
+      setResultSettle(errorResult("Connect a wallet to settle the claim.", "Settlement failed"));
       return;
     }
     const provider = myWalletAccount.provider;
@@ -343,7 +370,7 @@ export default function ClaimWorkspace() {
       }
       if (policyState !== 3n) {
         const stateLabel = POLICY_STATES[policyState.toString()]?.label ?? `state ${policyState}`;
-        setResultSettle(errorResult(`Policy ${constants.NyalthePolicyId} is ${stateLabel}; settlement needs the claim to be authorized first.`));
+        setResultSettle(errorResult(`Policy ${constants.NyalthePolicyId} is ${stateLabel}; settlement needs the claim to be authorized first.`, "Settlement failed"));
         return;
       }
       const balanceResponse = await provider.callContract(
@@ -361,13 +388,14 @@ export default function ClaimWorkspace() {
           buildPayoutFundingActions({ contractAddress: nyaltheAddress, tokenAddress: TOKEN }),
           setResultSettle,
           "1 STRK",
-          "Stage 1 of 2: withdrawing the payout to Nyalthe"
+          "Stage 1 of 2: withdrawing the payout to Nyalthe",
+          "Settlement failed"
         );
         return;
       }
       const payoutWei = num.toBigInt(constants.NyalthePayoutWei);
       if (contractBalance !== payoutWei) {
-        setResultSettle(errorResult(`Nyalthe holds ${fmtStrk(contractBalance)} STRK; settlement expects exactly ${fmtStrk(payoutWei)} STRK.`));
+        setResultSettle(errorResult(`Nyalthe holds ${fmtStrk(contractBalance)} STRK; settlement expects exactly ${fmtStrk(payoutWei)} STRK.`, "Settlement failed"));
         return;
       }
       const txH = await submit(
@@ -380,11 +408,12 @@ export default function ClaimWorkspace() {
         }),
         setResultSettle,
         "1 STRK",
-        "Stage 2 of 2: settling into an open note"
+        "Stage 2 of 2: settling into an open note",
+        "Settlement failed"
       );
       if (txH) setSettleTxHash(txH);
     } catch (error: any) {
-      setResultSettle(errorResult(error?.message ?? error?.toString?.() ?? String(error)));
+      setResultSettle(errorResult(error?.message ?? error?.toString?.() ?? String(error), "Settlement failed"));
     }
   };
 
@@ -474,8 +503,12 @@ export default function ClaimWorkspace() {
       label: "Protected payout to the claimant",
       value: policy ? fmtStrk(policy.payout) : fmtStrk(num.toBigInt(constants.NyalthePayoutWei)),
       token: "STRK",
-      hint: settled
-        ? "This claim has settled into an open note"
+      // Neutral until the chain read lands, so the hint never contradicts the
+      // on-chain state (e.g. "two steps" advice on an already-settled policy).
+      hint: !policy
+        ? "Reading the policy from Starknet…"
+        : settled
+        ? "This claim has settled into an open note for the claimant"
         : "Two steps: fund Nyalthe from the pool, then settle into an open note",
       cta: settled ? "Claim settled" : `Settle policy ${constants.NyalthePolicyId}`,
       onRun: handleSettle,
@@ -487,7 +520,7 @@ export default function ClaimWorkspace() {
       value: "All",
       token: "tokens",
       hint: "Read your private balances inside the pool",
-      cta: "Query balances",
+      cta: "Show shielded balances",
       onRun: handleBalances,
       result: resultBalances,
       disabled: !isStrk20Network,
@@ -621,7 +654,14 @@ export default function ClaimWorkspace() {
             {active.cta}
           </button>
         ) : (
-          <SelectWallet variant="ctaBig" />
+          <>
+            <SelectWallet variant="ctaBig" />
+            <p className={styles.gateNote}>
+              No privacy wallet yet? The policy card above is live on-chain, and policy
+              {" "}{constants.NyalthePolicyId} has already settled. A Ready X wallet is only
+              needed to run a settlement yourself.
+            </p>
+          </>
         )}
 
         {active.result ? <ResultCard r={active.result} /> : null}

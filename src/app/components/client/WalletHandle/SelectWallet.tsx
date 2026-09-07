@@ -117,7 +117,7 @@ export default function SelectWallet({ variant = "ctaBig" }: { variant?: "nav" |
       setPickerOpen(false);
     } catch (err: any) {
       console.log("Wallet connection failed.\n", err);
-      setError(err?.message ?? "Wallet connection failed.");
+      setError("Couldn't connect. Try Ready X, or open this page inside your wallet's browser.");
     } finally {
       setConnecting(false);
     }

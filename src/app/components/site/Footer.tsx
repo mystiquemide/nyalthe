@@ -51,6 +51,13 @@ export default function Footer() {
               >
                 Contract
               </a>
+              <a
+                href="https://github.com/mystiquemide/nyalthe/blob/main/strk20.json"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Submission evidence
+              </a>
             </div>
           </nav>
         </div>

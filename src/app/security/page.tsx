@@ -94,7 +94,9 @@ export default function SecurityPage() {
           </div>
           <p className={styles.note}>
             Every guard is covered by an automated Cairo test suite, and the policy is
-            deployed and exercised on Starknet mainnet.
+            deployed and exercised on Starknet mainnet. On the live policy, the creator,
+            funder, and event authority are the same deployer address - visible on
+            Starkscan - so the trust boundary is fully inspectable.
           </p>
         </section>
 

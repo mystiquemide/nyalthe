@@ -7,8 +7,8 @@ export default function FinalCta() {
       <div className={styles.inner}>
         <h2 className={styles.title}>Prove the payout. Protect the person.</h2>
         <p className={styles.sub}>
-          Open the app to run a settlement on Starknet, or see how a claim goes from a
-          funded policy to a private payout.
+          Open the app to read the settled policy, live on Starknet, or see how a claim
+          went from a funded policy to a private payout.
         </p>
         <div className={styles.actions}>
           <Link href="/app" className={styles.primary}>

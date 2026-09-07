@@ -20,6 +20,13 @@ describe("buildSettlementActions", () => {
     ]);
   });
 
+  it("uses the policy payout for the funding withdrawal", () => {
+    const two = 2_000_000_000_000_000_000n;
+    expect(
+      buildPayoutFundingActions({ contractAddress: "0x123", tokenAddress: "0x789", payoutWei: two })
+    ).toEqual([{ type: "withdraw", token: "0x789", amount: "0x1bc16d674ec80000", recipient: "0x123" }]);
+  });
+
   it("creates an open note before invoking Nyalthe", () => {
     const actions = buildSettlementActions({
       contractAddress: "0x123",

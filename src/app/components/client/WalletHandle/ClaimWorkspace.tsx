@@ -685,21 +685,25 @@ export default function ClaimWorkspace() {
       );
       const contractBalance =
         num.toBigInt(balanceResponse[0]) + (num.toBigInt(balanceResponse[1] ?? 0) << 128n);
+      // The payout to move must equal this policy's on-chain payout exactly.
+      const payoutWei = policy ? policy.payout : num.toBigInt(constants.NyalthePayoutWei);
       if (contractBalance === 0n) {
-        const actions = buildPayoutFundingActions({ contractAddress: nyaltheAddress, tokenAddress: TOKEN });
+        const actions = buildPayoutFundingActions({
+          contractAddress: nyaltheAddress,
+          tokenAddress: TOKEN,
+          payoutWei,
+        });
         setLastActions(actions);
         setActionsForDecode(actions);
         await submit(
           actions,
           setResultSettle,
-          "1 STRK",
+          `${fmtStrk(payoutWei)} STRK`,
           "Stage 1 of 2: withdrawing the payout to Nyalthe",
           "Settlement failed"
         );
         return;
       }
-      // The payout to move must equal this policy's on-chain payout exactly.
-      const payoutWei = policy ? policy.payout : num.toBigInt(constants.NyalthePayoutWei);
       if (contractBalance !== payoutWei) {
         setResultSettle(errorResult(`Nyalthe holds ${fmtStrk(contractBalance)} STRK; settlement expects exactly ${fmtStrk(payoutWei)} STRK.`, "Settlement failed"));
         return;
@@ -716,7 +720,7 @@ export default function ClaimWorkspace() {
       const txH = await submit(
         actions,
         setResultSettle,
-        "1 STRK",
+        `${fmtStrk(payoutWei)} STRK`,
         "Stage 2 of 2: settling into an open note",
         "Settlement failed"
       );

@@ -8,3 +8,12 @@ build/
 coverage/
 *.log
 cairo/target/
+.vercel
+tsconfig.tsbuildinfo
+
+# Internal working documents, never published
+memory.md
+AGENTS.md
+CLAUDE.md
+docs/
+.qwen/

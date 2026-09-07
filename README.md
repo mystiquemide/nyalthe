@@ -58,12 +58,11 @@ The full transaction list for scoring is in [`strk20.json`](strk20.json).
 
 The demo is live at **https://nyalthe.vercel.app**.
 
-1. Open the [claim workspace](https://nyalthe.vercel.app/app). The policy card reads live from the mainnet contract.
-2. Connect a privacy-enabled wallet (Ready X) on Starknet mainnet. First-time users register a viewing key with the pool (one-time setup).
-3. Shield STRK into the pool.
-4. Settle the authorized policy: stage 1 withdraws the payout to the contract, stage 2 settles it into an open note for the claimant. The policy state flips to SETTLED on-chain.
+1. Open the [claim workspace](https://nyalthe.vercel.app/app). The policy card reads live from the mainnet contract: state SETTLED, payout 1 STRK, event `weather-main`.
+2. Connect a privacy-enabled wallet (Ready X, Wallet API >= 0.10.3) on Starknet mainnet. First-time users register a viewing key with the pool (one-time setup).
+3. Shield STRK into the pool and check shielded balances - both are live STRK20 pool actions.
 
-Policy #1 has already been settled end-to-end on mainnet - the workspace reads it live.
+Policy #1 has already been settled end-to-end on mainnet - the workspace reads its final state live, and every settlement transaction is linked above.
 
 ## Trust model
 

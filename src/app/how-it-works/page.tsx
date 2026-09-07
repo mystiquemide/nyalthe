@@ -21,7 +21,7 @@ const STEPS = [
     num: "02",
     title: "Fund the reserve",
     state: "FUNDED",
-    text: "The creator locks the payout reserve for the policy. No claim can be authorized until the reserve is in place.",
+    text: "The creator funds the payout reserve so the contract holds the full payout. No claim can be authorized until the reserve is in place.",
   },
   {
     num: "03",

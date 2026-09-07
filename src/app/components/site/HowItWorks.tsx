@@ -7,7 +7,7 @@ const STEPS = [
     title: "Fund",
     img: "/img/step-fund.jpg",
     alt: "A young plant growing from a pile of coins",
-    text: "A policy creator locks the payout reserve in the STRK20 privacy pool.",
+    text: "A policy creator funds the payout reserve held by the contract.",
   },
   {
     n: "02",

@@ -53,7 +53,7 @@ export default function SelectWallet({ variant = "ctaBig" }: { variant?: "nav" |
   }, []);
 
   // Show every detected wallet except MetaMask (its Snap probing spams an unlock popup)
-  // and Braavos (excluded from this starter's picker).
+  // and Braavos (its Wallet API version predates STRK20 support).
   const pickable = wallets.filter((w) => {
     const id = normalizeId(w.name);
     return !id.includes("metamask") && !id.includes("braavos");
@@ -63,7 +63,6 @@ export default function SelectWallet({ variant = "ctaBig" }: { variant?: "nav" |
   // the zustand store with a WalletAccountV6 + account/chain/permissions.
   async function handleSelectedWallet(selectedWallet: WalletWithStarknetFeatures) {
     setMyWallet(selectedWallet); // zustand
-    console.log("Trying to connect wallet=", selectedWallet);
     // Ask the wallet which chain it is on before building the account, so the
     // account's provider matches the wallet's network (mainnet index 0, sepolia 2).
     let chainIdAtConnect: string = SNconstants.StarknetChainId.SN_MAIN as string;
@@ -75,13 +74,10 @@ export default function SelectWallet({ variant = "ctaBig" }: { variant?: "nav" |
     const providerIndex = chainIdAtConnect === SNconstants.StarknetChainId.SN_MAIN ? 0 : 2;
     const myWA = await WalletAccountV6.connect(myFrontendProviders[providerIndex], selectedWallet);
     setMyWalletAccount(myWA);
-    console.log("WalletAccount created=", myWA);
     const result = await walletV6.requestAccounts(selectedWallet);
     if (typeof (result) == "string") {
-      console.log("This Wallet is not compatible.");
       return;
     }
-    console.log("Current account addr =", result);
     if (Array.isArray(result)) {
       const addr = validateAndParseAddress(result[0]);
       setAddressAccount(addr); // zustand
@@ -91,7 +87,6 @@ export default function SelectWallet({ variant = "ctaBig" }: { variant?: "nav" |
     if (isConnectedWallet) {
       setChain(chainIdAtConnect);
       setCurrentFrontendProviderIndex(providerIndex);
-      console.log("change Provider index to :", providerIndex);
     }
     setWalletApi(await walletV6.supportedSpecs(selectedWallet));
   }
@@ -116,7 +111,7 @@ export default function SelectWallet({ variant = "ctaBig" }: { variant?: "nav" |
       await handleSelectedWallet(w);
       setPickerOpen(false);
     } catch (err: any) {
-      console.log("Wallet connection failed.\n", err);
+      console.warn("Wallet connection failed", err);
       setError("Couldn't connect. Try Ready X, or open this page inside your wallet's browser.");
     } finally {
       setConnecting(false);

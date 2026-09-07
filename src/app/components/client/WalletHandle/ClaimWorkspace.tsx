@@ -622,17 +622,10 @@ export default function ClaimWorkspace() {
               {active.token}
             </span>
           </div>
-          {tab === "shield" ? (
-            <div className={styles.subLine}>
-              <span>{active.hint}</span>
-              <span className={styles.subMono}>{shortWallet}</span>
-            </div>
-          ) : (
-            <div className={styles.subLine}>
-              <span>{active.hint}</span>
-              <span className={styles.subMono}>{shortWallet}</span>
-            </div>
-          )}
+          <div className={styles.subLine}>
+            <span>{active.hint}</span>
+            <span className={styles.subMono}>{shortWallet}</span>
+          </div>
         </div>
 
         <div className={styles.feeRow}>

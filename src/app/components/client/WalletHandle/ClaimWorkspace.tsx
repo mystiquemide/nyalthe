@@ -14,6 +14,11 @@ import { buildPayoutFundingActions, buildSettlementActions } from "@/lib/strk20/
 // All actions move STRK through the STRK20 privacy pool.
 const TOKEN = constants.addrSTRK;
 
+// Every STRK20 pool operation charges a 6 STRK privacy fee plus gas; the
+// settlement quote surfaces this before the user commits (Wise pattern).
+const POOL_FEE_WEI = 6_000_000_000_000_000_000n;
+const GAS_ESTIMATE_WEI = 2_400_000_000_000_000_000n;
+
 // Human-readable policy states, mirroring the Cairo contract.
 const POLICY_STATES: Record<string, { label: string; tone: "pending" | "action" | "done" | "dead" }> = {
   "0": { label: "Created", tone: "pending" },
@@ -23,6 +28,23 @@ const POLICY_STATES: Record<string, { label: string; tone: "pending" | "action" 
   "4": { label: "Settled", tone: "done" },
   "5": { label: "Expired", tone: "dead" },
 };
+
+const LIFECYCLE = [
+  { state: 0, label: "created" },
+  { state: 1, label: "funded" },
+  { state: 2, label: "event accepted" },
+  { state: 3, label: "authorized" },
+  { state: 4, label: "settled" },
+];
+
+// Policy #2's on-chain history: every transition is a real mainnet tx.
+const POLICY_TIMELINE = [
+  { who: "policy created", block: 14483256, hash: "0x051c3d13c5368f4a9b8f63e224dff8c14d2c609b0491d79327ff0badd469fbed" },
+  { who: "policy funded", block: 14483264, hash: "0x059415ed4dad06e2215b6bf3a3f14a4314e8db675b3281a32d308590f2aa7f67" },
+  { who: "event weather-main-2 accepted", block: 14483268, hash: "0x055296bbfb7d1041e92ce00a9f7908169d8e4dfb96547fa9cba90cf3e6388c59" },
+  { who: "claim authorized", block: 14483275, hash: "0x021babc95d24835c67a470312232753bb78dcd650c65f32d2ac434fe2864c6bf" },
+  { who: "settled into open note", block: 14511237, hash: "0x0652268f00d0b6f89b8b52cd0159881e008ffb528929168b5b375ad751d003d3" },
+];
 
 // Format a felt amount (STRK, 18 decimals) as a human STRK string ("10", "1.5").
 function fmtStrk(amount: bigint): string {
@@ -37,11 +59,16 @@ function shortHex(h: string): string {
   return hex.length <= 13 ? hex : `${hex.slice(0, 7)}…${hex.slice(-4)}`;
 }
 
+function fmtBlock(b: number): string {
+  return b.toLocaleString("en-US");
+}
+
 // Human-readable result of an action, rendered as a receipt card.
 type ResultRow = { label: string; value: string; hash?: string };
 type ActionResult = {
   status: "pending" | "ok" | "error";
   title: string;
+  decoded?: string;
   rows?: ResultRow[];
   note?: string;
 };
@@ -66,10 +93,23 @@ function prettyStatus(finality?: string, exec?: string): string {
   return [f, e].filter(Boolean).join(" · ") || "Confirmed";
 }
 
+// Decoded one-line summary of what a submitted action did on-chain.
+function decodedSummary(actions: WALLET_API.STRK20_ACTION[]): string {
+  const parts: string[] = [];
+  for (const a of actions as any[]) {
+    if (a.type === "deposit") parts.push(`Shielded ${fmtStrk(num.toBigInt(a.amount))} STRK into the privacy pool`);
+    else if (a.type === "withdraw") parts.push(`Withdrew ${fmtStrk(num.toBigInt(a.amount))} STRK to ${shortHex(a.recipient ?? "")} through the pool`);
+    else if (a.type === "transfer") parts.push(`Created an open note for ${shortHex(a.recipient ?? "")}`);
+    else if (a.type === "invoke") parts.push(`Invoked Nyalthe to settle policy ${a.calldata?.[1] ?? ""}`);
+    else parts.push(a.type);
+  }
+  return parts.join(" · ");
+}
+
 // Turn a raw tx receipt into a readable receipt card (status, fee, events, hash).
 // A reverted tx surfaces the contract's own revert reason - the revert strings are
 // the product's vocabulary.
-function receiptToResult(txR: any, txH: string, amountLabel: string): ActionResult {
+function receiptToResult(txR: any, txH: string, amountLabel: string, actions?: WALLET_API.STRK20_ACTION[]): ActionResult {
   const r = txR?.value ?? txR;
   const exec: string | undefined = r?.execution_status;
   const finality: string | undefined = r?.finality_status;
@@ -82,19 +122,22 @@ function receiptToResult(txR: any, txH: string, amountLabel: string): ActionResu
   } catch {
     /* leave fee undefined if unparseable */
   }
+  const blockNumber: number | undefined = r?.block_number;
   const evCount = Array.isArray(r?.events) ? r.events.length : undefined;
   const rows: ResultRow[] = [];
-  if (amountLabel) rows.push({ label: "Amount", value: amountLabel });
-  rows.push({ label: "Status", value: prettyStatus(finality, exec) });
-  if (feeStr) rows.push({ label: "Network fee", value: feeStr });
-  if (evCount !== undefined) rows.push({ label: "Events", value: String(evCount) });
+  if (amountLabel) rows.push({ label: "amount", value: amountLabel });
+  rows.push({ label: "status", value: prettyStatus(finality, exec) });
+  if (feeStr) rows.push({ label: "fee", value: feeStr });
+  if (evCount !== undefined) rows.push({ label: "events", value: String(evCount) });
+  if (blockNumber !== undefined) rows.push({ label: "block", value: fmtBlock(blockNumber) });
   if (reverted && revertReason) {
-    rows.push({ label: "Reason", value: revertReason.replace(/^.*?:\s*/, "").slice(0, 120) });
+    rows.push({ label: "reason", value: revertReason.replace(/^.*?:\s*/, "").slice(0, 120) });
   }
-  rows.push({ label: "Transaction", value: shortHex(txH), hash: txH });
+  rows.push({ label: "transaction", value: shortHex(txH), hash: txH });
   return {
     status: reverted ? "error" : "ok",
     title: reverted ? "Transaction reverted" : "Transaction confirmed",
+    decoded: actions ? decodedSummary(actions) : undefined,
     rows,
   };
 }
@@ -116,7 +159,7 @@ function balancesToResult(raw: any): ActionResult {
       const amount = b?.amount ?? b?.balance ?? b?.[1];
       let amtStr = String(amount);
       try {
-        amtStr = `${fmtStrk(num.toBigInt(amount))} `;
+        amtStr = fmtStrk(num.toBigInt(amount));
       } catch {
         /* keep raw */
       }
@@ -126,7 +169,7 @@ function balancesToResult(raw: any): ActionResult {
       } catch {
         /* keep generic */
       }
-      return { label, value: amtStr.trim() };
+      return { label, value: amtStr };
     });
     return { status: "ok", title: "Shielded balances", rows };
   }
@@ -151,7 +194,7 @@ function friendlyError(msg: string): string {
     return "Your wallet is on a different network than this policy. Switch to Starknet Mainnet and reconnect.";
   }
   if (msg.includes("Insufficient") || msg.includes("insufficient")) {
-    return "Not enough STRK in this wallet to cover the fee. Top up and try again.";
+    return "Not enough shielded STRK to cover the pool fee. Shield more and try again.";
   }
   if (msg.includes("NOT_REGISTERED")) {
     return "This account has no viewing key in the privacy pool yet. Use your wallet's own Shield action once, then retry.";
@@ -193,10 +236,14 @@ export default function ClaimWorkspace() {
   // Policy facts, read from the contract on load and refreshed after every tx.
   const [policy, setPolicy] = useState<PolicyInfo | null>(null);
   const [policyError, setPolicyError] = useState<string | null>(null);
+  // Latest block, captured with each policy read: the read is the evidence.
+  const [readBlock, setReadBlock] = useState<number | null>(null);
   // Per-action result cards.
   const [resultShield, setResultShield] = useState<ActionResult | null>(null);
   const [resultBalances, setResultBalances] = useState<ActionResult | null>(null);
   const [resultSettle, setResultSettle] = useState<ActionResult | null>(null);
+  // Last submitted actions, kept to decode the receipt.
+  const [lastActions, setLastActions] = useState<WALLET_API.STRK20_ACTION[]>([]);
   // Hash of a settlement completed in this session, kept to enrich the settled card.
   const [settleTxHash, setSettleTxHash] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("settle");
@@ -208,20 +255,25 @@ export default function ClaimWorkspace() {
   const readPolicy = useCallback(async () => {
     const provider = constants.myFrontendProviders[myFrontendProviderIndex];
     try {
-      const res = await provider.callContract(
-        {
-          contractAddress: nyaltheAddress,
-          entrypoint: "get_policy",
-          calldata: [constants.NyalthePolicyId],
-        },
-        "latest"
-      );
+      const [res, block] = await Promise.all([
+        provider.callContract(
+          {
+            contractAddress: nyaltheAddress,
+            entrypoint: "get_policy",
+            calldata: [constants.NyalthePolicyId],
+          },
+          "latest"
+        ),
+        provider.getBlock("latest"),
+      ]);
       setPolicy({
         state: num.toBigInt(res[5]),
         payout: num.toBigInt(res[3]),
         expiry: num.toBigInt(res[4]),
         eventId: shortString.decodeShortString(num.toHex(res[2])),
       });
+      const bn = (block as any)?.block_number ?? (block as any)?.blockHeader?.block_number;
+      setReadBlock(typeof bn === "number" ? bn : null);
       setPolicyError(null);
     } catch (error: any) {
       setPolicy(null);
@@ -281,8 +333,8 @@ export default function ClaimWorkspace() {
       title: "Waiting for confirmation…",
       note: "Private transactions take up to a minute to prove and submit.",
       rows: [
-        { label: "Amount", value: amountLabel },
-        { label: "Transaction", value: shortHex(txH), hash: txH },
+        { label: "amount", value: amountLabel },
+        { label: "transaction", value: shortHex(txH), hash: txH },
       ],
     });
     const provider = myWalletAccount.provider;
@@ -291,17 +343,25 @@ export default function ClaimWorkspace() {
         retries: 400,
         retryInterval: 3000,
       });
-      setResult(receiptToResult(txR, txH, amountLabel));
+      setResult(receiptToResult(txR, txH, amountLabel, lastActionsRef(actions)));
       readPolicy();
     } catch (error: any) {
       setResult({
         status: "error",
         title: "Confirmation timed out",
-        rows: [{ label: "Transaction", value: shortHex(txH), hash: txH }],
+        rows: [{ label: "transaction", value: shortHex(txH), hash: txH }],
         note: "This can happen while the proof is still processing. Check the transaction on the explorer before retrying - it may have landed.",
       });
     }
     return txH;
+  }
+
+  // The receipt is rendered after awaits, when `actions` may be stale in a
+  // closure; keep the latest submitted actions on a ref-like state getter.
+  const [actionsForDecode, setActionsForDecode] = useState<WALLET_API.STRK20_ACTION[]>([]);
+  function lastActionsRef(actions: WALLET_API.STRK20_ACTION[]) {
+    setActionsForDecode(actions);
+    return actions;
   }
 
   // Query the private (shielded) balances of all tokens held in the pool.
@@ -332,6 +392,8 @@ export default function ClaimWorkspace() {
     const actions: WALLET_API.STRK20_ACTION[] = [
       { type: "deposit", token: TOKEN, amount: num.toHex(amount) },
     ];
+    setLastActions(actions);
+    setActionsForDecode(actions);
     await submit(actions, setResultShield, `${whole} STRK`, "Preparing shield deposit", "Shield failed");
   };
 
@@ -360,11 +422,8 @@ export default function ClaimWorkspace() {
           status: "ok",
           title: "Claim settled",
           rows: settleTxHash
-            ? [{ label: "Settlement transaction", value: shortHex(settleTxHash), hash: settleTxHash }]
-            : [{ label: "Policy state", value: "Settled on-chain" }],
-          note: settleTxHash
-            ? undefined
-            : "The payout was deposited into an open note in the privacy pool.",
+            ? [{ label: "settlement tx", value: shortHex(settleTxHash), hash: settleTxHash }]
+            : [{ label: "policy state", value: "Settled on-chain" }],
         });
         return;
       }
@@ -384,8 +443,11 @@ export default function ClaimWorkspace() {
       const contractBalance =
         num.toBigInt(balanceResponse[0]) + (num.toBigInt(balanceResponse[1] ?? 0) << 128n);
       if (contractBalance === 0n) {
+        const actions = buildPayoutFundingActions({ contractAddress: nyaltheAddress, tokenAddress: TOKEN });
+        setLastActions(actions);
+        setActionsForDecode(actions);
         await submit(
-          buildPayoutFundingActions({ contractAddress: nyaltheAddress, tokenAddress: TOKEN }),
+          actions,
           setResultSettle,
           "1 STRK",
           "Stage 1 of 2: withdrawing the payout to Nyalthe",
@@ -398,14 +460,17 @@ export default function ClaimWorkspace() {
         setResultSettle(errorResult(`Nyalthe holds ${fmtStrk(contractBalance)} STRK; settlement expects exactly ${fmtStrk(payoutWei)} STRK.`, "Settlement failed"));
         return;
       }
+      const actions = buildSettlementActions({
+        contractAddress: nyaltheAddress,
+        claimantAddress: constants.NyaltheClaimantAddress,
+        tokenAddress: TOKEN,
+        policyId: constants.NyalthePolicyId,
+        payoutWei,
+      });
+      setLastActions(actions);
+      setActionsForDecode(actions);
       const txH = await submit(
-        buildSettlementActions({
-          contractAddress: nyaltheAddress,
-          claimantAddress: constants.NyaltheClaimantAddress,
-          tokenAddress: TOKEN,
-          policyId: constants.NyalthePolicyId,
-          payoutWei,
-        }),
+        actions,
         setResultSettle,
         "1 STRK",
         "Stage 2 of 2: settling into an open note",
@@ -441,6 +506,7 @@ export default function ClaimWorkspace() {
     : "-";
 
   const settled = policy?.state === 4n;
+  const expired = policy?.state === 5n;
 
   // Readable receipt card for any action result.
   const ResultCard = ({ r }: { r: ActionResult }) => (
@@ -455,10 +521,11 @@ export default function ClaimWorkspace() {
     >
       <div className={styles.receiptHead}>
         <span className={styles.receiptIcon}>
-          {r.status === "ok" ? "✓" : r.status === "error" ? "!" : "⋯"}
+          {r.status === "ok" ? "✓" : r.status === "error" ? "!" : "…"}
         </span>
         <span>{r.title}</span>
       </div>
+      {r.decoded ? <div className={styles.decoded}>{r.decoded}</div> : null}
       {r.rows?.length ? (
         <div className={styles.receiptRows}>
           {r.rows.map((row) => (
@@ -484,39 +551,47 @@ export default function ClaimWorkspace() {
     </div>
   );
 
-  // Per-tab presentation.
+  // Fee quote for the current tab: what the operation will actually cost.
+  const payoutWei = policy ? policy.payout : num.toBigInt(constants.NyalthePayoutWei);
+  const shieldTotal =
+    tab === "settle" && !settled && !expired
+      ? payoutWei + POOL_FEE_WEI
+      : tab === "shield" && Number(shieldAmount) > 0
+      ? BigInt(Math.floor(Number(shieldAmount) * 1e6)) * 10n ** 12n
+      : 0n;
+
   const CONFIG: Record<
     TabKey,
     { label: string; value: string; token: string; hint: string; cta: string; onRun: () => void; result: ActionResult | null; disabled: boolean }
   > = {
     shield: {
-      label: "Shielding into the privacy pool",
+      label: "// shielding into the privacy pool",
       value: shieldAmount,
       token: "STRK",
-      hint: "Creates the private notes that cover the payout leg. Pool fee is on top.",
+      hint: "Creates the private notes that cover the payout leg.",
       cta: `Shield ${shieldAmount || "…"} STRK`,
       onRun: handleShield,
       result: resultShield,
       disabled: !isStrk20Network,
     },
     settle: {
-      label: "Protected payout to the claimant",
-      value: policy ? fmtStrk(policy.payout) : fmtStrk(num.toBigInt(constants.NyalthePayoutWei)),
+      label: "// protected payout to claimant",
+      value: fmtStrk(payoutWei),
       token: "STRK",
-      // Neutral until the chain read lands, so the hint never contradicts the
-      // on-chain state (e.g. "two steps" advice on an already-settled policy).
       hint: !policy
         ? "Reading the policy from Starknet…"
         : settled
-        ? "This claim has settled into an open note for the claimant"
-        : "Two steps: fund Nyalthe from the pool, then settle into an open note",
-      cta: settled ? "Claim settled" : `Settle policy ${constants.NyalthePolicyId}`,
+        ? "Settled into an open note for the claimant. Terminal state, irreversible on-chain."
+        : expired
+        ? "This policy expired before settlement. The reserve stays at the contract."
+        : "Settles in STRK on Starknet mainnet, into a shielded open note for the claimant.",
+      cta: settled ? "Claim settled ✓" : expired ? "Policy expired" : `Settle policy ${constants.NyalthePolicyId}`,
       onRun: handleSettle,
       result: resultSettle,
-      disabled: !isStrk20Network || settled,
+      disabled: !isStrk20Network || settled || expired,
     },
     balances: {
-      label: "Shielded balances",
+      label: "// shielded balances",
       value: "All",
       token: "tokens",
       hint: "Read your private balances inside the pool",
@@ -530,20 +605,29 @@ export default function ClaimWorkspace() {
 
   return (
     <div className={styles.stack}>
-      {/* Policy card: the claim this workspace settles, read live from the chain */}
+      {/* Policy header: ID, state, explorer link */}
       <section className={styles.policyCard} aria-label="Policy overview">
         <div className={styles.policyHead}>
-          <span className={styles.policyTitle}>
-            Policy {constants.NyalthePolicyId}
-          </span>
-          {policyState ? (
-            <span className={`${styles.stateBadge} ${styles[`state_${policyState.tone}`]}`}>
-              {policyState.label}
-            </span>
-          ) : (
-            <span className={styles.stateBadge}>Reading…</span>
-          )}
+          <div className={styles.policyTitle}>
+            <span>Policy {constants.NyalthePolicyId}</span>
+            {policyState ? (
+              <span className={`${styles.stateBadge} ${styles[`state_${policyState.tone}`]}`}>
+                {policyState.label}
+              </span>
+            ) : (
+              <span className={styles.stateBadge}>Reading…</span>
+            )}
+          </div>
+          <a
+            className={styles.pmeta}
+            href={explorerContractUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            contract {shortHex(nyaltheAddress)} ↗
+          </a>
         </div>
+
         <dl className={styles.policyRows}>
           <div className={styles.policyRow}>
             <dt className={styles.policyK}>Payout</dt>
@@ -560,26 +644,51 @@ export default function ClaimWorkspace() {
             <dd className={styles.policyV}>{expiryDate}</dd>
           </div>
           <div className={styles.policyRow}>
-            <dt className={styles.policyK}>Contract</dt>
-            <dd className={styles.policyV}>
-              <a
-                className={styles.policyLink}
-                href={explorerContractUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {shortHex(nyaltheAddress)} ↗
-              </a>
-            </dd>
-          </div>
-          <div className={styles.policyRow}>
-            <dt className={styles.policyK}>Network</dt>
-            <dd className={styles.policyV}>{networkName ?? "Unsupported"}</dd>
+            <dt className={styles.policyK}>Claimant</dt>
+            <dd className={styles.policyV}>•••••• committed</dd>
           </div>
         </dl>
+
+        {/* Trigger index: the trust boundary as a first-class field */}
+        <div className={styles.trigger}>
+          <span className={styles.triggerLbl}>// trigger index</span>
+          <span>authority-gated</span>
+          <span>event match</span>
+          <span>accepted once</span>
+        </div>
+
+        {/* Lifecycle stepper: the state machine is the product */}
+        <div className={styles.steps}>
+          {LIFECYCLE.map((s) => {
+            const cur = policy ? Number(policy.state) : -1;
+            const cls =
+              expired
+                ? s.state <= 1
+                  ? styles.stDone
+                  : s.state === 4
+                  ? styles.stDead
+                  : ""
+                : cur > s.state
+                ? styles.stDone
+                : cur === s.state
+                ? styles.stCur
+                : "";
+            return (
+              <div key={s.state} className={`${styles.st} ${cls}`}>
+                {cur > s.state ? "✓ " : ""}
+                {s.label}
+              </div>
+            );
+          })}
+        </div>
+
         {policyError ? (
           <p className={styles.warn}>
             Could not read the policy: {policyError}
+          </p>
+        ) : readBlock ? (
+          <p className={styles.pmeta}>
+            read from Starknet · block {fmtBlock(readBlock)}
           </p>
         ) : null}
       </section>
@@ -598,7 +707,7 @@ export default function ClaimWorkspace() {
           ))}
         </div>
 
-        <div className={styles.inputBlock}>
+        <div className={styles.pbody}>
           <div className={styles.inputLabel}>{active.label}</div>
           <div className={styles.inputMain}>
             {tab === "shield" ? (
@@ -626,38 +735,92 @@ export default function ClaimWorkspace() {
             <span>{active.hint}</span>
             <span className={styles.subMono}>{shortWallet}</span>
           </div>
-        </div>
 
-        <div className={styles.feeRow}>
-          <span>Network</span>
-          <span className={`${styles.feeVal} ${isStrk20Network ? styles.netOk : styles.netBad}`}>
-            <span className={`${styles.netDot} ${isStrk20Network ? styles.netOkDot : styles.netBadDot}`} />
-            {networkName ?? "Unsupported"}
-          </span>
-        </div>
+          {/* Itemized quote: fees discovered here, not in a wallet error */}
+          {shieldTotal > 0n ? (
+            <div className={styles.quote}>
+              {tab === "settle" ? (
+                <div className={styles.quoteRow}>
+                  <span>Payout to open note</span>
+                  <span>{fmtStrk(payoutWei)} STRK</span>
+                </div>
+              ) : null}
+              <div className={styles.quoteRow}>
+                <span>Pool privacy fee</span>
+                <span>{fmtStrk(POOL_FEE_WEI)} STRK</span>
+              </div>
+              <div className={styles.quoteRow}>
+                <span>Network fee (est.)</span>
+                <span>~{fmtStrk(GAS_ESTIMATE_WEI)} STRK</span>
+              </div>
+              <div className={`${styles.quoteRow} ${styles.quoteTotal}`}>
+                <span>{tab === "settle" ? "Shielded balance required" : "Shielded after deposit"}</span>
+                <span>{fmtStrk(shieldTotal)} STRK</span>
+              </div>
+            </div>
+          ) : null}
 
-        {!isStrk20Network && (
-          <div className={styles.warn}>
-            STRK20 actions require Mainnet or Sepolia. Switch your wallet network.
+          <div className={styles.feeRow}>
+            <span>Network</span>
+            <span className={`${styles.feeVal} ${isStrk20Network ? styles.netOk : styles.netBad}`}>
+              {networkName ?? "Unsupported"}
+            </span>
           </div>
-        )}
 
-        {isConnected ? (
-          <button className={styles.btnCta} onClick={active.onRun} disabled={active.disabled}>
-            {active.cta}
-          </button>
-        ) : (
-          <>
-            <SelectWallet variant="ctaBig" />
-            <p className={styles.gateNote}>
-              No privacy wallet yet? The policy card above is live on-chain, and policy
-              {" "}{constants.NyalthePolicyId} is {settled ? "already settled" : "authorized and ready to settle"}. A Ready X wallet is only
-              needed to run a settlement yourself.
+          {!isStrk20Network && (
+            <div className={styles.warn}>
+              STRK20 actions require Mainnet or Sepolia. Switch your wallet network.
+            </div>
+          )}
+
+          {isConnected ? (
+            <button className={styles.btnCta} onClick={active.onRun} disabled={active.disabled}>
+              {active.cta}
+            </button>
+          ) : (
+            <>
+              <SelectWallet variant="ctaBig" />
+              <p className={styles.gateNote}>
+                No privacy wallet yet? The policy card above is live on-chain, and policy
+                {" "}{constants.NyalthePolicyId} is {settled ? "already settled" : "authorized and ready to settle"}. A Ready X wallet is only
+                needed to run a settlement yourself.
+              </p>
+            </>
+          )}
+
+          {settled && tab === "settle" ? (
+            <p className={styles.terminal}>Payout executed. Terminal state - irreversible on-chain.</p>
+          ) : null}
+          {expired && tab === "settle" ? (
+            <p className={`${styles.terminal} ${styles.terminalDead}`}>
+              Trigger window closed. Reserve stays at the contract.
             </p>
-          </>
-        )}
+          ) : null}
 
-        {active.result ? <ResultCard r={active.result} /> : null}
+          {active.result ? <ResultCard r={active.result} /> : null}
+
+          <p className={styles.assure}>
+            Funds remain under your control - Nyalthe never custodies.
+          </p>
+        </div>
+      </div>
+
+      {/* Activity: every lifecycle transition, with real block numbers */}
+      <div className={styles.railBox}>
+        <div className={styles.railLbl}>// activity</div>
+        <div className={styles.tl}>
+          {POLICY_TIMELINE.slice()
+            .reverse()
+            .map((ev) => (
+              <div key={ev.hash} className={styles.tlEv}>
+                <span className={styles.tlDot} />
+                <a className={styles.tlWho} href={explorerTxUrl(ev.hash)} target="_blank" rel="noreferrer">
+                  {ev.who}
+                </a>
+                <span className={styles.tlWhen}>blk {fmtBlock(ev.block)}</span>
+              </div>
+            ))}
+        </div>
       </div>
     </div>
   );

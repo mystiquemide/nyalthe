@@ -1,34 +1,135 @@
-.main {
-  min-height: calc(100vh - 77px);
-  background: var(--canvas);
+/* /app workspace shell — dark instrument (palette A).
+   Scoped to this route: the marketing site keeps its own chrome. Tokens adapt
+   the wireframe's #0d0f11 family to the site's existing dark canvas + orange
+   accent so /app reads as the same product, instrument-grade. */
+
+.shell {
+  min-height: calc(100vh - 57px);
+  background: #0a0b0c;
+  color: var(--ink);
+  font-size: 14px;
 }
 
-.inner {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 56px var(--gutter) 96px;
+/* Product header: replaces the marketing nav on this route. */
+.hdr {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  border-bottom: 1px solid #1e2226;
+  background: #0d0f11;
 }
 
-.head {
-  margin-bottom: 32px;
-}
-
-.eyebrow {
+.hdrBrand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
   font-size: 13px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.hdrLogo {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  display: block;
+}
+
+.netPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--aqua-deep);
-  margin-bottom: 12px;
+  color: #9ddbae;
+  border: 1px solid #2c4a38;
+  background: rgba(61, 110, 79, 0.12);
+  border-radius: 4px;
+  padding: 2px 8px;
 }
 
-.title {
-  font-size: clamp(28px, 5vw, 40px);
-  margin-bottom: 14px;
+.netPillOff {
+  color: #d3a15f;
+  border-color: #4a3d28;
+  background: rgba(160, 120, 60, 0.1);
 }
 
-.sub {
-  font-size: 17px;
-  color: var(--body);
-  max-width: 52ch;
+.netDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.hdrNav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.hdrLink {
+  font-size: 12px;
+  color: #98a1a8;
+  text-decoration: none;
+}
+
+.hdrLink:hover {
+  color: var(--ink);
+}
+
+.hdrLinkOn {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Two-column body: main stage + properties rail. */
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  align-items: start;
+}
+
+.main {
+  min-width: 0;
+  padding: 20px 26px 48px;
+  border-right: 1px solid #1e2226;
+}
+
+.rail {
+  position: sticky;
+  top: 0;
+  padding: 18px 16px 48px;
+  background: #0c0e10;
+}
+
+@media (max-width: 960px) {
+  .body {
+    grid-template-columns: 1fr;
+  }
+  .main {
+    border-right: 0;
+    padding: 16px 16px 32px;
+  }
+  .rail {
+    position: static;
+    border-top: 1px solid #1e2226;
+    padding: 16px 16px 32px;
+  }
+  .hdrNav {
+    display: none;
+  }
+}
+
+/* Loading skeleton state. */
+.load {
+  padding: 64px 20px;
+  text-align: center;
+  color: #6b737a;
+  font-size: 12px;
+  font-family: var(--font-mono);
 }

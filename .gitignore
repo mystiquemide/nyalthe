@@ -16,4 +16,5 @@ memory.md
 AGENTS.md
 CLAUDE.md
 docs/
+!src/app/docs/
 .qwen/

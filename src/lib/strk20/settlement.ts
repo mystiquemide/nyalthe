@@ -1,6 +1,6 @@
 import type { WALLET_API } from "@starknet-io/types-js";
 import type { Call } from "starknet";
-import { num } from "starknet";
+import { hash, num } from "starknet";
 
 export type SettlementActionInput = {
   contractAddress: string;
@@ -58,6 +58,25 @@ export function encodeEventId(eventId: string): string {
   let hex = "";
   for (const ch of eventId) hex += ch.charCodeAt(0).toString(16).padStart(2, "0");
   return "0x" + (hex === "" ? "0" : hex);
+}
+
+/** A claimant commitment the chain cannot invert: Poseidon(address, salt).
+ * The salt is random per policy and stays client-side, so the on-chain felt
+ * leaks nothing about the claimant. */
+export function deriveClaimantCommitment(address: string, salt: string | bigint): string {
+  return hash.computePoseidonHash(
+    num.toBigInt(address),
+    num.toBigInt(salt)
+  );
+}
+
+/** A random felt salt for commitment derivation (client-side only). */
+export function randomCommitmentSalt(): string {
+  const bytes = new Uint8Array(30);
+  crypto.getRandomValues(bytes);
+  let hex = "0x";
+  for (const b of bytes) hex += b.toString(16).padStart(2, "0");
+  return num.toHex(num.toBigInt(hex) & ((1n << 250n) - 1n));
 }
 
 export type CreatePolicyInput = {

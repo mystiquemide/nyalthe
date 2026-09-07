@@ -10,6 +10,7 @@ import {
   buildMarkFundedCall,
   buildPayoutFundingActions,
   buildSettlementActions,
+  deriveClaimantCommitment,
   encodeEventId,
 } from "./settlement";
 
@@ -70,6 +71,19 @@ describe("self-serve policy creation", () => {
     expect(() => encodeEventId("")).toThrow();
     expect(() => encodeEventId("too long ".repeat(5))).toThrow();
     expect(() => encodeEventId("bad\nchar")).toThrow();
+  });
+
+  it("derives an uninvertible, salt-dependent claimant commitment", () => {
+    const addr = "0x066c07d563dac5e1017a8a54cd0e63c7a51e2d205d48611a91ce9f52f2efceaa";
+    const c1 = deriveClaimantCommitment(addr, "0x1234");
+    const c2 = deriveClaimantCommitment(addr, "0x5678");
+    // different salts -> different commitments: the address alone reveals nothing
+    expect(c1).not.toBe(c2);
+    // deterministic for the same inputs
+    expect(deriveClaimantCommitment(addr, "0x1234")).toBe(c1);
+    // a valid felt, not the raw address
+    expect(c1).toMatch(/^0x[0-9a-f]+$/);
+    expect(c1.toLowerCase()).not.toContain(addr.slice(2, 12));
   });
 
   it("builds the create_policy call with user-chosen fields", () => {

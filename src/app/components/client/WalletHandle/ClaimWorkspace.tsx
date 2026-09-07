@@ -16,6 +16,8 @@ import {
   buildMarkFundedCall,
   buildPayoutFundingActions,
   buildSettlementActions,
+  deriveClaimantCommitment,
+  randomCommitmentSalt,
 } from "@/lib/strk20/settlement";
 
 // All actions move STRK through the STRK20 privacy pool.
@@ -229,11 +231,13 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 // A user-created policy tracked locally so the workspace can switch to it.
+// The salt backs the on-chain claimant commitment and never leaves the client.
 type TrackedPolicy = {
   id: string;
   eventId: string;
   payoutWei: bigint;
   expiry: number;
+  commitmentSalt: string;
 };
 
 export default function ClaimWorkspace() {
@@ -493,11 +497,10 @@ export default function ClaimWorkspace() {
     }
     setFormBusy(true);
     const payoutWei = BigInt(Math.floor(payout * 1e6)) * 10n ** 12n;
-    // Commitment: a hash-like felt derived from the creator's address, stored
-    // instead of the claimant's address - the claimant stays protected.
-    const commitment = num.toHex(
-      BigInt(connectedAddress.slice(2, 12) || "0") + 0x2f6a1c9b3e8d54f7n
-    );
+    // Commitment: Poseidon(claimant address, random salt). The salt stays
+    // client-side; the chain sees only an uninvertible felt.
+    const commitmentSalt = randomCommitmentSalt();
+    const commitment = deriveClaimantCommitment(connectedAddress, commitmentSalt);
     const call = buildCreatePolicyCall({
       contractAddress: nyaltheAddress,
       eventId: event,
@@ -514,17 +517,6 @@ export default function ClaimWorkspace() {
     );
     setFormBusy(false);
     if (!txH) return;
-    // Read back the new policy id: next_policy_id - 1 after creation.
-    try {
-      const provider = constants.myFrontendProviders[myFrontendProviderIndex];
-      const res = await provider.callContract(
-        { contractAddress: nyaltheAddress, entrypoint: "get_policy", calldata: [num.toHex(1)] },
-        "latest"
-      );
-      void res; // existence probe only
-    } catch {
-      /* ignore: id discovery below */
-    }
     let newId: string | null = null;
     try {
       const provider = constants.myFrontendProviders[myFrontendProviderIndex];
@@ -556,6 +548,7 @@ export default function ClaimWorkspace() {
         eventId: event,
         payoutWei,
         expiry: expiryTs,
+        commitmentSalt,
       };
       setMyPolicies((prev) => [...prev.filter((p) => p.id !== newId), tracked]);
       setActivePolicyId(newId);
@@ -571,8 +564,31 @@ export default function ClaimWorkspace() {
   };
 
   // Fund the active user-created policy: transfer the reserve, then mark funded.
+  // The reserve is a public transfer, so check the wallet's real public STRK
+  // balance first - fail with a clear message instead of a wallet revert.
   const handleFundMyPolicy = async (p: TrackedPolicy) => {
     setResultNew(null);
+    if (!myWalletAccount) {
+      setResultNew(errorResult("Connect a wallet to fund your policy.", "Reserve transfer failed"));
+      return;
+    }
+    try {
+      const balRes = await myWalletAccount.provider.callContract(
+        { contractAddress: TOKEN, entrypoint: "balance_of", calldata: [myWalletAccount.address] },
+        "latest"
+      );
+      const publicBalance =
+        num.toBigInt(balRes[0]) + (num.toBigInt(balRes[1] ?? 0) << 128n);
+      if (publicBalance < p.payoutWei) {
+        setResultNew(errorResult(
+          `This wallet holds ${fmtStrk(publicBalance)} public STRK; the reserve needs ${fmtStrk(p.payoutWei)}. Deposit STRK to this address first.`,
+          "Reserve transfer failed"
+        ));
+        return;
+      }
+    } catch {
+      /* balance read failed: let the wallet surface the real error */
+    }
     const fundCall = buildFundReserveCall({
       tokenAddress: TOKEN,
       contractAddress: nyaltheAddress,
@@ -708,9 +724,13 @@ export default function ClaimWorkspace() {
         setResultSettle(errorResult(`Nyalthe holds ${fmtStrk(contractBalance)} STRK; settlement expects exactly ${fmtStrk(payoutWei)} STRK.`, "Settlement failed"));
         return;
       }
+      // The open note goes to the policy's claimant: the demo policy's pinned
+      // claimant, or the creator's own address for user-created policies
+      // (their commitment was derived from it client-side).
+      const claimantAddress = myWalletAccount?.address ?? constants.NyaltheClaimantAddress;
       const actions = buildSettlementActions({
         contractAddress: nyaltheAddress,
-        claimantAddress: constants.NyaltheClaimantAddress,
+        claimantAddress,
         tokenAddress: TOKEN,
         policyId: activePolicyId,
         payoutWei,

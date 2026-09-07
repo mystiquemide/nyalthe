@@ -688,3 +688,143 @@
 .addrPill:hover .addrDisconnect { display: inline; }
 
 .ctaBig { display: block; }
+
+/* ---------- policy selector ---------- */
+
+.policySelect {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.policyChip {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: #8b939b;
+  background: #14171a;
+  border: 1px solid #23282d;
+  border-radius: 5px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.policyChipOn {
+  color: var(--ink);
+  border-color: var(--aqua-deep);
+  background: #1a1512;
+}
+
+.policyChipHint {
+  font-size: 10px;
+  color: #565e66;
+  font-family: var(--font-mono);
+}
+
+/* ---------- new-policy form ---------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .formRow { grid-template-columns: 1fr; }
+}
+
+.field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6b737a;
+  margin-bottom: 5px;
+}
+
+.fieldInput {
+  width: 100%;
+  background: #101316;
+  border: 1px solid #2c3136;
+  border-radius: 6px;
+  color: var(--ink);
+  font-size: 14px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  padding: 9px 12px;
+  outline: none;
+}
+
+.fieldInput:focus {
+  border-color: #3a4147;
+}
+
+.fieldHint {
+  font-size: 10px;
+  color: #565e66;
+  margin-top: 4px;
+}
+
+.fieldErr {
+  font-size: 10px;
+  color: #e58f88;
+  margin-top: 4px;
+}
+
+/* Guided steps after creation */
+.nextSteps {
+  margin-top: 14px;
+  border: 1px solid #23282d;
+  border-radius: 6px;
+  background: #101316;
+  padding: 12px 14px;
+}
+
+.nextStepRow {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 5px 0;
+  font-size: 12px;
+  color: #aab2b9;
+}
+
+.nextStepNum {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b737a;
+  border: 1px solid #2c3136;
+  border-radius: 3px;
+  padding: 1px 6px;
+  flex: none;
+}
+
+.nextStepDone { color: #9ddbae; }
+.nextStepNumDone { color: #9ddbae; border-color: #2c4a38; }
+
+.nextStepBtn {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: #e8a06a;
+  background: none;
+  border: 1px solid #4a3d28;
+  border-radius: 4px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.nextStepBtn:disabled { opacity: 0.4; cursor: wait; }
